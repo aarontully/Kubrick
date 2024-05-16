@@ -1,14 +1,32 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const MainApp());
 }
 
+class Recording {
+  final String path;
+  final Duration duration;
+  final DateTime recordedAt;
 
+  Recording({
+    required this.path,
+    required this.duration,
+    required this.recordedAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'path': path,
+    'duration': duration.inMilliseconds,
+    'recordedAt': recordedAt.toIso8601String(),
+  };
+}
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -20,7 +38,7 @@ class MainApp extends StatefulWidget {
 class MainAppState extends State<MainApp> {
   final recorder = FlutterSoundRecorder();
   bool isRecorderReady = false;
-  List<String?> recordings = [];
+  List<Recording> recordings = [];
 
   @override
   void initState() {
@@ -56,11 +74,15 @@ class MainAppState extends State<MainApp> {
   Future stop() async {
     if(!isRecorderReady) return;
     final path = await recorder.stopRecorder();
-    recordings.add(path);
+    final audioFile = File(path!);
+    final duration = await audioFile.length();
+    final recording = Recording(path: path, duration: Duration(milliseconds: duration), recordedAt: DateTime.now());
+    await saveFile(recording);
+    recordings.add(recording);
     setState(() {});
   }
 
-  void checkRecordings(String path) async {
+  /* void checkRecordings(String path) async {
     final dir = Directory(path);
 
     if(await dir.exists()){
@@ -70,11 +92,17 @@ class MainAppState extends State<MainApp> {
         //no recordings
       } else {
         for (var recording in foundRecordings) {
-          recordings.add(recording.path);
+          recordings.add();
         }
         setState(() {});
       }
     }
+  } */
+
+  void saveFile(Recording recording) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/${recording.path}.json');
+    await file.writeAsString(jsonEncode(recording.toJson()));
   }
 
   @override
