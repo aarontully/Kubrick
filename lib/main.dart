@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MainApp());
@@ -13,7 +15,7 @@ void main() {
 class Recording {
   final String path;
   final Duration duration;
-  final DateTime recordedAt;
+  final String recordedAt;
 
   Recording({
     required this.path,
@@ -24,7 +26,7 @@ class Recording {
   Map<String, dynamic> toJson() => {
     'path': path,
     'duration': duration.inMilliseconds,
-    'recordedAt': recordedAt.toIso8601String(),
+    'recordedAt': recordedAt,
   };
 }
 
@@ -37,18 +39,22 @@ class MainApp extends StatefulWidget {
 
 class MainAppState extends State<MainApp> {
   final recorder = FlutterSoundRecorder();
+  final player = FlutterSoundPlayer();
   bool isRecorderReady = false;
   List<Recording> recordings = [];
+  final uuid = const Uuid();
 
   @override
   void initState() {
     super.initState();
     initRecorder();
+    initPlayer();
   }
 
   @override
   void dispose() {
     recorder.closeRecorder();
+    player.closePlayer();
     super.dispose();
   }
 
@@ -64,6 +70,24 @@ class MainAppState extends State<MainApp> {
     recorder.setSubscriptionDuration(
       const Duration(milliseconds: 500)
     );
+
+    final directory = await getApplicationDocumentsDirectory();
+    final dir = Directory('${directory.path}/audio/');
+    if(dir.existsSync()){
+      dir.listSync().forEach((file) {
+        if(file.path.endsWith('.json')) {
+          final recordingJson = File(file.path).readAsStringSync();
+          final recordingMap = jsonDecode(recordingJson);
+          final recording = Recording(path: recordingMap['path'], duration: Duration(milliseconds: recordingMap['duration']), recordedAt: recordingMap['recordedAt']);
+          recordings.add(recording);
+        }
+      });
+    }
+    setState(() {});
+  }
+
+  Future initPlayer() async {
+    await player.openPlayer();
   }
 
   Future record() async {
@@ -73,36 +97,20 @@ class MainAppState extends State<MainApp> {
 
   Future stop() async {
     if(!isRecorderReady) return;
-    final path = await recorder.stopRecorder();
-    final audioFile = File(path!);
-    final duration = await audioFile.length();
-    final recording = Recording(path: path, duration: Duration(milliseconds: duration), recordedAt: DateTime.now());
-    await saveFile(recording);
+    await recorder.stopRecorder();
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('dd-MM-yyyy HH:mm').format(now);
+    final createUuid = uuid.v1();
+    final directory = await getApplicationDocumentsDirectory();
+    final dir = Directory('${directory.path}/audio/');
+    if(!dir.existsSync()){
+      dir.createSync(recursive: true);
+    }
+    final file = File('${dir.path}/$createUuid.json');
+    final recording = Recording(path: createUuid, duration: const Duration(milliseconds: 0), recordedAt: formattedDate);
+    await file.writeAsString(jsonEncode(recording.toJson()));
     recordings.add(recording);
     setState(() {});
-  }
-
-  /* void checkRecordings(String path) async {
-    final dir = Directory(path);
-
-    if(await dir.exists()){
-      final files = dir.listSync();
-      final foundRecordings = files.where((file) => file.path.endsWith('.mp3')).toList();
-      if(foundRecordings.isEmpty){
-        //no recordings
-      } else {
-        for (var recording in foundRecordings) {
-          recordings.add();
-        }
-        setState(() {});
-      }
-    }
-  } */
-
-  void saveFile(Recording recording) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/${recording.path}.json');
-    await file.writeAsString(jsonEncode(recording.toJson()));
   }
 
   @override
@@ -119,14 +127,24 @@ class MainAppState extends State<MainApp> {
                 itemCount: recordings.length,
                 itemBuilder: (context, index){
                   return ListTile(
-                    subtitle: Text('${recordings[index]}'),
+                    title: Text(recordings[index].path),
+                    subtitle: Text(recordings[index].recordedAt),
+                    onTap: () async {
+                      final directory = await getApplicationDocumentsDirectory();
+                      final path = '${directory.path}/audio/${recordings[index].path}.json';
+                      if(await File(path).exists()){
+                        await player.startPlayer(fromURI: path);
+                      } else {
+                        print('File does not exist');
+                      }
+                    },
                   );
                 },
               ),
             ),
             Center(
               child: Container(
-                margin: const EdgeInsets.all(10),
+                margin: const EdgeInsets.all(20),
                 child: Column(
                   children: <Widget>[
                     StreamBuilder<RecordingDisposition>(
@@ -139,7 +157,7 @@ class MainAppState extends State<MainApp> {
                         return Text(
                           '$twoDigitMinutes:$twoDigitSeconds',
                           style: const TextStyle(
-                            fontSize: 50,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold
                           ),
                         );
@@ -156,7 +174,7 @@ class MainAppState extends State<MainApp> {
                       },
                       style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(10),
                         backgroundColor: Colors.red[600],
                         iconColor: Colors.red[900],
                       ),
