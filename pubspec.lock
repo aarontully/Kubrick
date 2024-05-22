@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.11.0"
+  audio_session:
+    dependency: transitive
+    description:
+      name: audio_session
+      sha256: a49af9981eec5d7cd73b37bacb6ee73f8143a6a9f9bd5b6021e6c346b9b6cf4e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.19"
   boolean_selector:
     dependency: transitive
     description:
@@ -86,30 +94,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
-  flutter_sound:
-    dependency: "direct main"
-    description:
-      name: flutter_sound
-      sha256: "8e86721e2fb01a8ab34da120bc15e8f4bac7ad75c1a6eb0d5fa66a9a6de12bfc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "9.4.9"
-  flutter_sound_platform_interface:
-    dependency: transitive
-    description:
-      name: flutter_sound_platform_interface
-      sha256: bd11b92e04b4011f66d0bcb43726eb313d1dc817e61b6240a72d3f0d09d05dcf
-      url: "https://pub.dev"
-    source: hosted
-    version: "9.4.9"
-  flutter_sound_web:
-    dependency: transitive
-    description:
-      name: flutter_sound_web
-      sha256: d595b44d418a2ce018ae216c10e0d0c749adf93f669554f5f75477994d7f8b7a
-      url: "https://pub.dev"
-    source: hosted
-    version: "9.4.9"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -132,10 +116,34 @@ packages:
     dependency: transitive
     description:
       name: js
-      sha256: c1b2e9b5ea78c45e1a0788d29606ba27dc5f71f019f32ca5140f61ef071838cf
+      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.1"
+    version: "0.6.7"
+  just_audio:
+    dependency: "direct main"
+    description:
+      name: just_audio
+      sha256: "5abfab1d199e01ab5beffa61b3e782350df5dad036cb8c83b79fa45fc656614e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.38"
+  just_audio_platform_interface:
+    dependency: transitive
+    description:
+      name: just_audio_platform_interface
+      sha256: "0243828cce503c8366cc2090cefb2b3c871aa8ed2f520670d76fd47aa1ab2790"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.3.0"
+  just_audio_web:
+    dependency: transitive
+    description:
+      name: just_audio_web
+      sha256: "0edb481ad4aa1ff38f8c40f1a3576013c3420bf6669b686fe661627d49bc606c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.11"
   leak_tracker:
     dependency: transitive
     description:
@@ -168,14 +176,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
-  logger:
-    dependency: transitive
-    description:
-      name: logger
-      sha256: af05cc8714f356fd1f3888fb6741cbe9fbe25cdb6eedbab80e1a6db21047d4a4
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.0"
   matcher:
     dependency: transitive
     description:
@@ -200,16 +200,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.12.0"
-  nested:
-    dependency: transitive
-    description:
-      name: nested
-      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   path:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path
       sha256: "087ce49c3f0dc39180befefc60fdb4acd8f8620e5682fe2476afd0b3688bb4af"
@@ -328,22 +320,70 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
-  provider:
-    dependency: transitive
+  record:
+    dependency: "direct main"
     description:
-      name: provider
-      sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c
+      name: record
+      sha256: "113b368168c49c78902ab37c2b354dea30a0aec5bdeca434073826b6ea73eca1"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.2"
-  recase:
+    version: "5.0.5"
+  record_android:
     dependency: transitive
     description:
-      name: recase
-      sha256: e4eb4ec2dcdee52dcf99cb4ceabaffc631d7424ee55e56f280bc039737f89213
+      name: record_android
+      sha256: "0df98e05873b22b443309e289bf1eb3b5b9a60e7779134334e2073eb0763a992"
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.0"
+    version: "1.1.0"
+  record_darwin:
+    dependency: transitive
+    description:
+      name: record_darwin
+      sha256: ee8cb1bb1712d7ce38140ecabe70e5c286c02f05296d66043bee865ace7eb1b9
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  record_linux:
+    dependency: transitive
+    description:
+      name: record_linux
+      sha256: "7d0e70cd51635128fe9d37d89bafd6011d7cbba9af8dc323079ae60f23546aef"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.1"
+  record_platform_interface:
+    dependency: transitive
+    description:
+      name: record_platform_interface
+      sha256: "3a4b56e94ecd2a0b2b43eb1fa6f94c5b8484334f5d38ef43959c4bf97fb374cf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
+  record_web:
+    dependency: transitive
+    description:
+      name: record_web
+      sha256: "24847cdbcf999f7a5762170792f622ac844858766becd0f2370ec8ae22f7526e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.5"
+  record_windows:
+    dependency: transitive
+    description:
+      name: record_windows
+      sha256: "39998b3ea7d8d28b04159d82220e6e5e32a7c357c6fb2794f5736beea272f6c3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
+  rxdart:
+    dependency: transitive
+    description:
+      name: rxdart
+      sha256: "0c7c0cedd93788d996e33041ffecda924cc54389199cde4e6a34b440f50044cb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.27.7"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -365,6 +405,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.0"
+  sqflite:
+    dependency: "direct main"
+    description:
+      name: sqflite
+      sha256: a43e5a27235518c03ca238e7b4732cf35eabe863a369ceba6cbefa537a66f16d
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.3+1"
+  sqflite_common:
+    dependency: transitive
+    description:
+      name: sqflite_common
+      sha256: "3da423ce7baf868be70e2c0976c28a1bb2f73644268b7ffa7d2e08eab71f16a4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.4"
   stack_trace:
     dependency: transitive
     description:
@@ -445,6 +501,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "14.2.1"
+  web:
+    dependency: transitive
+    description:
+      name: web
+      sha256: "97da13628db363c635202ad97068d47c5b8aa555808e7a9411963c533b449b27"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.1"
   win32:
     dependency: transitive
     description:

@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+import 'package:just_audio/just_audio.dart';
 import 'package:intl/intl.dart';
 
 void main() {
@@ -13,21 +16,24 @@ void main() {
 }
 
 class Recording {
-  final String path;
-  final Duration duration;
-  final String recordedAt;
+  final String? path;
+  final DateTime createdAt;
 
-  Recording({
-    required this.path,
-    required this.duration,
-    required this.recordedAt,
-  });
+  Recording({required this.path, required this.createdAt});
 
-  Map<String, dynamic> toJson() => {
-    'path': path,
-    'duration': duration.inMilliseconds,
-    'recordedAt': recordedAt,
-  };
+  Map<String, dynamic> toMap() {
+    return {
+      'path': path,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  static Recording fromMap(Map<String, dynamic> map) {
+    return Recording(
+      path: map['path'],
+      createdAt: DateTime.parse(map['createdAt']),
+    );
+  }
 }
 
 class MainApp extends StatefulWidget {
@@ -38,79 +44,72 @@ class MainApp extends StatefulWidget {
 }
 
 class MainAppState extends State<MainApp> {
-  final recorder = FlutterSoundRecorder();
-  final player = FlutterSoundPlayer();
-  bool isRecorderReady = false;
-  List<Recording> recordings = [];
-  final uuid = const Uuid();
+  final record = AudioRecorder();
+  final uuid = Uuid();
+  Database? db;
+  bool isRecording = false;
+  final player = AudioPlayer();
+
+  Future<List<Recording>> getRecordings() async {
+    final List<Map<String, dynamic>> maps = await db!.query('recordings');
+    return List.generate(maps.length, (i){
+      return Recording.fromMap(maps[i]);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    initRecorder();
-    initPlayer();
+    initDatabase();
   }
 
   @override
   void dispose() {
-    recorder.closeRecorder();
-    player.closePlayer();
+    db?.close();
     super.dispose();
   }
 
-  Future initRecorder() async {
-    final status = await Permission.microphone.request();
-
-    if(status != PermissionStatus.granted) {
-      throw 'Microphone permission not granted';
-    }
-
-    isRecorderReady = true;
-    await recorder.openRecorder();
-    recorder.setSubscriptionDuration(
-      const Duration(milliseconds: 500)
+  Future<void> initDatabase() async {
+    db = await openDatabase(
+      p.join(await getDatabasesPath(), 'recordings.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          "CREATE TABLE recordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT)",
+        );
+      },
+      version: 1,
     );
+  }
 
-    final directory = await getApplicationDocumentsDirectory();
-    final dir = Directory('${directory.path}/audio/');
-    if(dir.existsSync()){
-      dir.listSync().forEach((file) {
-        if(file.path.endsWith('.json')) {
-          final recordingJson = File(file.path).readAsStringSync();
-          final recordingMap = jsonDecode(recordingJson);
-          final recording = Recording(path: recordingMap['path'], duration: Duration(milliseconds: recordingMap['duration']), recordedAt: recordingMap['recordedAt']);
-          recordings.add(recording);
-        }
+  Future<void> startRecording() async {
+    if(await record.hasPermission()) {
+      Directory directory = await getApplicationDocumentsDirectory();
+      String path = '${directory.path}/audio/${uuid.v1()}.aac';
+      await record.start(const RecordConfig(), path: path);
+      setState(() {
+        isRecording = true;
       });
     }
-    setState(() {});
   }
 
-  Future initPlayer() async {
-    await player.openPlayer();
-  }
+  Future<Recording> stopRecording() async {
+    String? path = await record.stop();
+    setState(() {
+      isRecording = false;
+    });
 
-  Future record() async {
-    if(!isRecorderReady) return;
-    await recorder.startRecorder(toFile: 'audio');
-  }
+    Recording recording = Recording(
+      path: path,
+      createdAt: DateTime.now(),
+    );
 
-  Future stop() async {
-    if(!isRecorderReady) return;
-    await recorder.stopRecorder();
-    DateTime now = DateTime.now();
-    String formattedDate = DateFormat('dd-MM-yyyy HH:mm').format(now);
-    final createUuid = uuid.v1();
-    final directory = await getApplicationDocumentsDirectory();
-    final dir = Directory('${directory.path}/audio/');
-    if(!dir.existsSync()){
-      dir.createSync(recursive: true);
-    }
-    final file = File('${dir.path}/$createUuid.json');
-    final recording = Recording(path: createUuid, duration: const Duration(milliseconds: 0), recordedAt: formattedDate);
-    await file.writeAsString(jsonEncode(recording.toJson()));
-    recordings.add(recording);
-    setState(() {});
+    await db?.insert(
+      'recordings',
+      recording.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+
+    return recording;
   }
 
   @override
@@ -123,22 +122,30 @@ class MainAppState extends State<MainApp> {
         body: Column(
           children: <Widget>[
             Expanded(
-              child: ListView.builder(
-                itemCount: recordings.length,
-                itemBuilder: (context, index){
-                  return ListTile(
-                    title: Text(recordings[index].path),
-                    subtitle: Text(recordings[index].recordedAt),
-                    onTap: () async {
-                      final directory = await getApplicationDocumentsDirectory();
-                      final path = '${directory.path}/audio/${recordings[index].path}.json';
-                      if(await File(path).exists()){
-                        await player.startPlayer(fromURI: path);
-                      } else {
-                        print('File does not exist');
-                      }
-                    },
-                  );
+              child: FutureBuilder<List<Recording>>(
+                future: getRecordings(),
+                builder: (BuildContext context, AsyncSnapshot<List<Recording>> snapshot) {
+                  if(snapshot.hasData) {
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        String fileName = p.basename(snapshot.data![index].path!);
+                        String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(snapshot.data![index].createdAt);
+                        return ListTile(
+                          title: Text(fileName),
+                          subtitle: Text(formattedDate),
+                          onTap: () async {
+                            await player.setFilePath(snapshot.data![index].path!);
+                            player.play();
+                          },
+                        );
+                      },
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    return const CircularProgressIndicator();
+                  }
                 },
               ),
             ),
@@ -147,28 +154,12 @@ class MainAppState extends State<MainApp> {
                 margin: const EdgeInsets.all(20),
                 child: Column(
                   children: <Widget>[
-                    StreamBuilder<RecordingDisposition>(
-                      stream: recorder.onProgress,
-                      builder: (context, snapshot) {
-                        final duration = snapshot.hasData ? snapshot.data!.duration : Duration.zero;
-                        String twoDigits(int n) => n.toString().padLeft(2, '0');
-                        final twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-                        final twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-                        return Text(
-                          '$twoDigitMinutes:$twoDigitSeconds',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold
-                          ),
-                        );
-                      },
-                    ),
                     ElevatedButton(
                       onPressed: () async {
-                        if(recorder.isRecording){
-                          await stop();
+                        if(isRecording){
+                          await stopRecording();
                         } else {
-                          await record();
+                          await startRecording();
                         }
                         setState(() {});
                       },
@@ -179,7 +170,7 @@ class MainAppState extends State<MainApp> {
                         iconColor: Colors.red[900],
                       ),
                       child: Icon(
-                        recorder.isRecording ? Icons.stop : Icons.mic_rounded,
+                        isRecording ? Icons.stop : Icons.mic_rounded,
                         size: 60,
                       ),
                     ),
