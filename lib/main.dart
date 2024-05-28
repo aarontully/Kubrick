@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:just_audio/just_audio.dart';
 import 'package:intl/intl.dart';
+import 'package:kubrick/screens/recording_info.dart';
 
 void main() {
   runApp(const MainApp());
@@ -44,29 +46,48 @@ class MainApp extends StatefulWidget {
 }
 
 class MainAppState extends State<MainApp> {
+  List<Recording>? recordings;
   final record = AudioRecorder();
-  final uuid = Uuid();
+  final uuid = const Uuid();
   Database? db;
   bool isRecording = false;
   final player = AudioPlayer();
 
-  Future<List<Recording>> getRecordings() async {
-    final List<Map<String, dynamic>> maps = await db!.query('recordings');
-    return List.generate(maps.length, (i){
-      return Recording.fromMap(maps[i]);
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    initDatabase();
+    requestPermissions().then((_) {
+      initDatabase().then((_) {
+        getRecordings().then((_) {
+          setState(() {});
+        });
+      });
+    });
   }
 
   @override
   void dispose() {
     db?.close();
     super.dispose();
+  }
+
+  Future<void> requestPermissions() async {
+    PermissionStatus micStatus = await Permission.microphone.status;
+    PermissionStatus storageStatus = await Permission.storage.status;
+
+    if(micStatus.isDenied || storageStatus.isDenied) {
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.microphone,
+        Permission.storage,
+      ].request();
+      print(statuses[Permission.microphone]);
+      print(statuses[Permission.storage]);
+
+      if(!(statuses[Permission.microphone]!.isGranted && statuses[Permission.storage]!.isGranted)) {
+        //didnt get all the permissions - handle this
+        return;
+      }
+    }
   }
 
   Future<void> initDatabase() async {
@@ -92,7 +113,7 @@ class MainAppState extends State<MainApp> {
     }
   }
 
-  Future<Recording> stopRecording() async {
+  Future<void> stopRecording() async {
     String? path = await record.stop();
     setState(() {
       isRecording = false;
@@ -109,7 +130,18 @@ class MainAppState extends State<MainApp> {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    return recording;
+    setState(() {
+      recordings?.add(recording);
+    });
+  }
+
+  Future<void> getRecordings() async {
+    final List<Map<String, dynamic>> maps = await db!.query('recordings');
+    setState(() {
+      recordings = List.generate(maps.length, (i) {
+        return Recording.fromMap(maps[i]);
+      });
+    });
   }
 
   @override
@@ -122,31 +154,26 @@ class MainAppState extends State<MainApp> {
         body: Column(
           children: <Widget>[
             Expanded(
-              child: FutureBuilder<List<Recording>>(
-                future: getRecordings(),
-                builder: (BuildContext context, AsyncSnapshot<List<Recording>> snapshot) {
-                  if(snapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        String fileName = p.basename(snapshot.data![index].path!);
-                        String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(snapshot.data![index].createdAt);
-                        return ListTile(
-                          title: Text(fileName),
-                          subtitle: Text(formattedDate),
-                          onTap: () async {
-                            await player.setFilePath(snapshot.data![index].path!);
-                            player.play();
-                          },
-                        );
-                      },
+              child: Center(
+              child: recordings == null
+                ? const CircularProgressIndicator()
+                : ListView.builder(
+                  itemCount: recordings!.length,
+                  itemBuilder: (context, index) {
+                  String fileName = p.basename(recordings![index].path!);
+                  String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(recordings![index].createdAt);
+                  return ListTile(
+                    title: Text(fileName),
+                    subtitle: Text(formattedDate),
+                    onTap: () async {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RecordingInfoScreen(recording: recordings![index]))
                     );
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    return const CircularProgressIndicator();
-                  }
-                },
+                    },
+                  );
+                  },
+                ),
               ),
             ),
             Center(
