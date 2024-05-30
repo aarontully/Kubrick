@@ -1,12 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:kubrick/main.dart';
+import 'package:kubrick/services/ai_api_service.dart';
 import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqlite_api.dart';
 
 class RecordingInfoScreen extends StatefulWidget {
   final Recording recording;
-  const RecordingInfoScreen({super.key, required this.recording});
+  final Database? db;
+  final Function onDelete;
+  const RecordingInfoScreen({super.key, required this.recording, this.db, required this.onDelete});
 
   @override
   _RecordingInfoScreenState createState() => _RecordingInfoScreenState();
@@ -30,6 +37,34 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
     super.dispose();
   }
 
+  Future<void> deleteRecording() async {
+    File file = File(widget.recording.path!);
+    if (await file.exists()) {
+      await file.delete();
+    }
+
+    await widget.db!.delete(
+      'recordings',
+      where: 'path = ?',
+      whereArgs: [widget.recording.path],
+    );
+    widget.onDelete(widget.recording);
+    // ignore: use_build_context_synchronously
+    Navigator.of(context).pop();
+  }
+
+  Future<void> transcribeAudio() async {
+    final apiService = ApiService(baseUrl: 'https://transcription.staging.endemolshine.com.au/api/v1');
+    final response = await apiService.get('user');
+
+    if (response.statusCode == 200) {
+      //final transcription = response.body;
+      // Use the 'transcription' variable here
+    } else {
+      //print('Didnt work');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,12 +73,19 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
           PopupMenuButton<String>(
         onSelected: (String value) {
           if (value == '1') {
-            // Delete logic goes here
+            transcribeAudio();
+          }
+          else if (value == '2') {
+            deleteRecording();
           }
         },
         itemBuilder: (context) => [
           const PopupMenuItem(
             value: '1',
+            child: Text('Transcribe'),
+          ),
+          const PopupMenuItem(
+            value: '2',
             child: Text('Delete'),
           )
         ],

@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +12,16 @@ import 'package:intl/intl.dart';
 import 'package:kubrick/screens/recording_info.dart';
 
 void main() {
+  HttpOverrides.global = MyHttpOverrides();
   runApp(const MainApp());
+}
+
+class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
+  }
 }
 
 class Recording {
@@ -105,7 +112,7 @@ class MainAppState extends State<MainApp> {
   Future<void> startRecording() async {
     if(await record.hasPermission()) {
       Directory directory = await getApplicationDocumentsDirectory();
-      String path = '${directory.path}/audio/${uuid.v1()}.aac';
+      String path = '${directory.path}/${uuid.v1()}.aac';
       await record.start(const RecordConfig(), path: path);
       setState(() {
         isRecording = true;
@@ -160,18 +167,28 @@ class MainAppState extends State<MainApp> {
                 : ListView.builder(
                   itemCount: recordings!.length,
                   itemBuilder: (context, index) {
-                  String fileName = p.basename(recordings![index].path!);
-                  String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(recordings![index].createdAt);
-                  return ListTile(
-                    title: Text(fileName),
-                    subtitle: Text(formattedDate),
-                    onTap: () async {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => RecordingInfoScreen(recording: recordings![index]))
+                    String fileName = p.basename(recordings![index].path!);
+                    String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(recordings![index].createdAt);
+                    return ListTile(
+                      title: Text(fileName),
+                      subtitle: Text(formattedDate),
+                      onTap: () async {
+                        if(recordings != null && recordings!.isNotEmpty && index >= 0 && index < recordings!.length) {
+                          Navigator.push(
+                          context,
+                            MaterialPageRoute(builder: (context) => RecordingInfoScreen(
+                              recording: recordings![index],
+                              db: db!,
+                              onDelete: (recording) {
+                                setState(() {
+                                  recordings!.remove(recording);
+                                });
+                              },
+                            ))
+                          );
+                        }
+                      },
                     );
-                    },
-                  );
                   },
                 ),
               ),
