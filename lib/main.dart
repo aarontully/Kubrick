@@ -65,8 +65,10 @@ class MainAppState extends State<MainApp> {
     super.initState();
     requestPermissions().then((_) {
       initDatabase().then((_) {
-        getRecordings().then((_) {
-          setState(() {});
+        getRecordings().then((result) {
+          setState(() {
+            recordings = result;
+          });
         });
       });
     });
@@ -87,8 +89,6 @@ class MainAppState extends State<MainApp> {
         Permission.microphone,
         Permission.storage,
       ].request();
-      print(statuses[Permission.microphone]);
-      print(statuses[Permission.storage]);
 
       if(!(statuses[Permission.microphone]!.isGranted && statuses[Permission.storage]!.isGranted)) {
         //didnt get all the permissions - handle this
@@ -142,12 +142,14 @@ class MainAppState extends State<MainApp> {
     });
   }
 
-  Future<void> getRecordings() async {
+  Future<List<Recording>> getRecordings() async {
     final List<Map<String, dynamic>> maps = await db!.query('recordings');
-    setState(() {
-      recordings = List.generate(maps.length, (i) {
-        return Recording.fromMap(maps[i]);
-      });
+
+    return List.generate(maps.length, (index) {
+      return Recording(
+        path: maps[index]['path'],
+        createdAt: DateTime.parse(maps[index]['createdAt']),
+      );
     });
   }
 
@@ -165,6 +167,7 @@ class MainAppState extends State<MainApp> {
               child: recordings == null
                 ? const CircularProgressIndicator()
                 : ListView.builder(
+                  key: UniqueKey(),
                   itemCount: recordings!.length,
                   itemBuilder: (context, index) {
                     String fileName = p.basename(recordings![index].path!);
@@ -179,10 +182,13 @@ class MainAppState extends State<MainApp> {
                             MaterialPageRoute(builder: (context) => RecordingInfoScreen(
                               recording: recordings![index],
                               db: db!,
-                              onDelete: (recording) {
-                                setState(() {
-                                  recordings!.remove(recording);
-                                });
+                              onDelete: (recording) async {
+                                int index = recordings!.indexWhere((element) => element == recording);
+                                if(index != -1) {
+                                  recordings!.removeAt(index);
+                                }
+                                recordings = await getRecordings();
+                                setState(() {});
                               },
                             ))
                           );

@@ -51,6 +51,7 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
     widget.onDelete(widget.recording);
     // ignore: use_build_context_synchronously
     Navigator.of(context).pop();
+    setState(() {});
   }
 
   Future<void> transcribeAudio() async {
