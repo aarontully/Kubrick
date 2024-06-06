@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/database_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:kubrick/services/database_helper.dart';
 import 'package:uuid/uuid.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:just_audio/just_audio.dart';
 import 'package:intl/intl.dart';
@@ -24,27 +26,6 @@ class MyHttpOverrides extends HttpOverrides{
   }
 }
 
-class Recording {
-  final String? path;
-  final DateTime createdAt;
-
-  Recording({required this.path, required this.createdAt});
-
-  Map<String, dynamic> toMap() {
-    return {
-      'path': path,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
-  static Recording fromMap(Map<String, dynamic> map) {
-    return Recording(
-      path: map['path'],
-      createdAt: DateTime.parse(map['createdAt']),
-    );
-  }
-}
-
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
@@ -56,7 +37,6 @@ class MainAppState extends State<MainApp> {
   List<Recording>? recordings;
   final record = AudioRecorder();
   final uuid = const Uuid();
-  Database? db;
   bool isRecording = false;
   final player = AudioPlayer();
 
@@ -64,11 +44,9 @@ class MainAppState extends State<MainApp> {
   void initState() {
     super.initState();
     requestPermissions().then((_) {
-      initDatabase().then((_) {
-        getRecordings().then((result) {
-          setState(() {
-            recordings = result;
-          });
+      getRecordings().then((result) {
+        setState(() {
+          recordings = result;
         });
       });
     });
@@ -76,7 +54,6 @@ class MainAppState extends State<MainApp> {
 
   @override
   void dispose() {
-    db?.close();
     super.dispose();
   }
 
@@ -95,18 +72,6 @@ class MainAppState extends State<MainApp> {
         return;
       }
     }
-  }
-
-  Future<void> initDatabase() async {
-    db = await openDatabase(
-      p.join(await getDatabasesPath(), 'recordings.db'),
-      onCreate: (db, version) {
-        return db.execute(
-          "CREATE TABLE recordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT)",
-        );
-      },
-      version: 1,
-    );
   }
 
   Future<void> startRecording() async {
@@ -131,11 +96,7 @@ class MainAppState extends State<MainApp> {
       createdAt: DateTime.now(),
     );
 
-    await db?.insert(
-      'recordings',
-      recording.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await DatabaseHelper.insertRecording(recording);
 
     setState(() {
       recordings?.add(recording);
@@ -143,14 +104,7 @@ class MainAppState extends State<MainApp> {
   }
 
   Future<List<Recording>> getRecordings() async {
-    final List<Map<String, dynamic>> maps = await db!.query('recordings');
-
-    return List.generate(maps.length, (index) {
-      return Recording(
-        path: maps[index]['path'],
-        createdAt: DateTime.parse(maps[index]['createdAt']),
-      );
-    });
+    return DatabaseHelper.getRecordings();
   }
 
   @override
@@ -204,7 +158,7 @@ class MainAppState extends State<MainApp> {
                         setState(() {
                           recordings!.removeAt(index);
                         });
-                        await db!.delete('recordings', where: 'path = ?', whereArgs: [pathToDelete]);
+                        await DatabaseHelper.deleteRecording(Recording(path: pathToDelete, createdAt: DateTime.now()));
                       },
                       background: Container(
                         color: Colors.red,
@@ -223,13 +177,12 @@ class MainAppState extends State<MainApp> {
                             context,
                               MaterialPageRoute(builder: (context) => RecordingInfoScreen(
                                 recording: recordings![index],
-                                db: db!,
                                 onDelete: (recording) async {
                                   int index = recordings!.indexWhere((element) => element == recording);
                                   if(index != -1) {
                                     recordings!.removeAt(index);
                                   }
-                                  recordings = await getRecordings();
+                                  recordings = await DatabaseHelper.getRecordings();
                                   setState(() {});
                                 },
                               ))
