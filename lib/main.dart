@@ -167,33 +167,76 @@ class MainAppState extends State<MainApp> {
               child: recordings == null
                 ? const CircularProgressIndicator()
                 : ListView.builder(
-                  key: UniqueKey(),
                   itemCount: recordings!.length,
                   itemBuilder: (context, index) {
                     String fileName = p.basename(recordings![index].path!);
                     String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(recordings![index].createdAt);
-                    return ListTile(
-                      title: Text(fileName),
-                      subtitle: Text(formattedDate),
-                      onTap: () async {
-                        if(recordings != null && recordings!.isNotEmpty && index >= 0 && index < recordings!.length) {
-                          Navigator.push(
-                          context,
-                            MaterialPageRoute(builder: (context) => RecordingInfoScreen(
-                              recording: recordings![index],
-                              db: db!,
-                              onDelete: (recording) async {
-                                int index = recordings!.indexWhere((element) => element == recording);
-                                if(index != -1) {
-                                  recordings!.removeAt(index);
-                                }
-                                recordings = await getRecordings();
-                                setState(() {});
-                              },
-                            ))
-                          );
-                        }
+                    return Dismissible(
+                      key: Key(recordings![index].path!),
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss: (direction) async {
+                        return await showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Delete Recording'),
+                              content: const Text('Are you sure you want to delete this recording?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop(false);
+                                  },
+                                  child: const Text('No'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop(true);
+                                  },
+                                  child: const Text('Yes'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
+                      onDismissed: (direction) async {
+                        var pathToDelete = recordings![index].path;
+                        setState(() {
+                          recordings!.removeAt(index);
+                        });
+                        await db!.delete('recordings', where: 'path = ?', whereArgs: [pathToDelete]);
+                      },
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        child: const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Icon(Icons.delete, color: Colors.white),
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(fileName),
+                        subtitle: Text(formattedDate),
+                        onTap: () async {
+                          if(recordings != null && recordings!.isNotEmpty && index >= 0 && index < recordings!.length) {
+                            Navigator.push(
+                            context,
+                              MaterialPageRoute(builder: (context) => RecordingInfoScreen(
+                                recording: recordings![index],
+                                db: db!,
+                                onDelete: (recording) async {
+                                  int index = recordings!.indexWhere((element) => element == recording);
+                                  if(index != -1) {
+                                    recordings!.removeAt(index);
+                                  }
+                                  recordings = await getRecordings();
+                                  setState(() {});
+                                },
+                              ))
+                            );
+                          }
+                        },
+                      ),
                     );
                   },
                 ),
