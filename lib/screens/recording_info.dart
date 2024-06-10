@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/ai_api_service.dart';
-import 'package:kubrick/services/database_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 import 'package:tuple/tuple.dart';
@@ -40,16 +39,20 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
   }
 
   Future<void> transcribeAudio() async {
-    final apiService = ApiService(baseUrl: 'https://transcription.staging.endemolshine.com.au/api/v1');
-    final uploadId = await apiService.initUpload();
+    final apiService = ApiService();
     final fileBytes = await File(widget.recording.path!).readAsBytes();
+    //large uploads will put it into ram and crash the app
     const chunkSize = 1024 * 1024; //1MB
     final chunkCount = (fileBytes.length / chunkSize).ceil();
+    final fileName = p.basename(widget.recording.path!);
+
+    final uploadId = await apiService.initUpload(chunkCount, fileName, fileBytes.length);
 
     for (var i = 0; i < chunkCount; i++) {
       final start = i * chunkSize;
       final end = min(start + chunkSize, fileBytes.length);
       final chunkBytes = fileBytes.sublist(start, end);
+
       await apiService.uploadChunk(uploadId, i, chunkBytes.length, chunkBytes);
     }
 

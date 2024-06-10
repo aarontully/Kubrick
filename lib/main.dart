@@ -6,7 +6,6 @@ import 'package:kubrick/services/database_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-import 'package:kubrick/services/database_helper.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path/path.dart' as p;
 import 'package:just_audio/just_audio.dart';
