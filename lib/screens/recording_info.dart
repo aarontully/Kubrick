@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/models/transcription_class.dart';
 import 'package:kubrick/services/ai_api_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
@@ -57,6 +58,10 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
     }
 
     await apiService.completeUpload(uploadId);
+
+    //start transcription
+    Data data = await apiService.fetchTranscription(uploadId, chunkCount, chunkSize, fileName);
+    print(data.file.name);
   }
 
   @override

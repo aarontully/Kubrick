@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:kubrick/models/transcription_class.dart';
 
 class ApiService {
   final String baseUrl = 'https://transcription.staging.endemolshine.com.au/api/v1';
@@ -19,7 +20,7 @@ class ApiService {
   }
 
   Future<String> initUpload(int chunks, String name, int size) async {
-    final url = Uri.parse('$baseUrl/files/uploads/init');
+    final url = Uri.parse('$baseUrl/files/upload');
     final response = await http.post(
       url,
       headers: <String, String> {
@@ -32,16 +33,18 @@ class ApiService {
         'size': size,
       }),
     );
+    print(response.body);
+    print(response);
     final responseBody = jsonDecode(response.body);
-    if(responseBody['data'] != null && responseBody['data']['upload'] != null) {
-      return responseBody['data']['upload']['id'];
+    if(responseBody['data'] != null && responseBody['data']['file'] != null) {
+      return responseBody['data']['file']['id'];
     } else {
       throw Exception('Failed to init upload');
     }
   }
 
-  Future<void> uploadChunk(String uploadId, int chunk, int size, List<int> file) async {
-    final url = Uri.parse('$baseUrl/files/uploads/$uploadId');
+  Future<void> uploadChunk(String fileId, int chunk, int size, List<int> file) async {
+    final url = Uri.parse('$baseUrl/files/$fileId');
     await http.post(
       url,
       headers: <String, String> {
@@ -56,8 +59,8 @@ class ApiService {
     );
   }
 
-  Future<void> completeUpload(String uploadId) async {
-    final url = Uri.parse('$baseUrl/files/uploads/$uploadId/complete');
+  Future<void> completeUpload(String fileId) async {
+    final url = Uri.parse('$baseUrl/files/$fileId/complete');
     await http.post(
       url,
       headers: <String, String> {
@@ -65,5 +68,29 @@ class ApiService {
         'Authorization': 'Bearer $token',
       },
     );
+  }
+
+  Future<Data> fetchTranscription(String fileId, int chunks, int size, String name) async {
+    final url = Uri.parse('$baseUrl/files/$fileId/transcriptions');
+    final response = await http.post(
+      url,
+      headers: <String, String> {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'chunks': chunks,
+        'size': size,
+        'name': name,
+      }),
+    );
+    print(response.body);
+    print(response.statusCode);
+    if(response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      return Data.fromJson(responseBody['data']);
+    } else {
+      throw Exception('Failed to transcribe audio');
+    }
   }
 }
