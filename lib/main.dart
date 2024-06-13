@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:just_audio/just_audio.dart';
 import 'package:intl/intl.dart';
 import 'package:kubrick/screens/recording_info.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   HttpOverrides.global = MyHttpOverrides();
@@ -109,6 +110,25 @@ class MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.purple,
+          brightness: Brightness.dark,
+        ),
+        textTheme: TextTheme(
+          displayLarge: const TextStyle(
+            fontSize: 72,
+            fontWeight: FontWeight.bold
+          ),
+          titleLarge: GoogleFonts.oswald(
+            fontSize: 30,
+            fontStyle: FontStyle.italic,
+          ),
+          bodyMedium: GoogleFonts.merriweather(),
+          displaySmall: GoogleFonts.pacifico(),
+        ),
+      ),
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Kubrick Transcriber'),

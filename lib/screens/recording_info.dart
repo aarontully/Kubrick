@@ -75,11 +75,11 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
             width: double.infinity,
             margin: const EdgeInsets.only(left: 20.0, right: 20.0),
             child: ElevatedButton(
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all<EdgeInsets>(
-                  const EdgeInsets.all(20.0)
-                )
-              ),
+              style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              padding: const EdgeInsets.all(20.0),
+            ),
               onPressed: () {
                 transcribeAudio();
               },
