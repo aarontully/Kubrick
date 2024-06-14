@@ -10,6 +10,7 @@ class DatabaseHelper {
   static const String columnId = 'id';
   static const String columnPath = 'path';
   static const String columnCreatedAt = 'createdAt';
+  static const String columnName = 'name';
 
   static Future<Database> initDatabase() async {
     return openDatabase(
@@ -18,7 +19,7 @@ class DatabaseHelper {
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tabeRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT)",
+            "CREATE TABLE $tabeRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT)",
           );
           await txn.execute(
             "CREATE TABLE $tableUploads (id INTEGER PRIMARY KEY, recordingPath TEXT, uploadId TEXT, chunkCount INTEGER, uploadedChunks INTEGER, isComplete INTEGER)",
@@ -50,6 +51,7 @@ class DatabaseHelper {
       return Recording(
         path: maps[index][columnPath],
         createdAt: DateTime.parse(maps[index][columnCreatedAt]),
+        name: maps[index][columnName],
       );
     });
   }

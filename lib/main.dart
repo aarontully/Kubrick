@@ -1,20 +1,28 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:get/instance_manager.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/models/transcription_class.dart';
+import 'package:kubrick/services/ai_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
+import 'package:loading_indicator/loading_indicator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
-import 'package:path/path.dart' as p;
 import 'package:just_audio/just_audio.dart';
 import 'package:intl/intl.dart';
 import 'package:kubrick/screens/recording_info.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   HttpOverrides.global = MyHttpOverrides();
+
+  Get.put(SharedState());
   runApp(const MainApp());
 }
 
@@ -39,6 +47,7 @@ class MainAppState extends State<MainApp> {
   final uuid = const Uuid();
   bool isRecording = false;
   final player = AudioPlayer();
+  var sharedState = Get.find<SharedState>();
 
   @override
   void initState() {
@@ -60,6 +69,8 @@ class MainAppState extends State<MainApp> {
   Future<void> requestPermissions() async {
     PermissionStatus micStatus = await Permission.microphone.status;
     PermissionStatus storageStatus = await Permission.storage.status;
+
+    //await controller.checkPermission();
 
     if(micStatus.isDenied || storageStatus.isDenied) {
       Map<Permission, PermissionStatus> statuses = await [
@@ -87,13 +98,19 @@ class MainAppState extends State<MainApp> {
 
   Future<void> stopRecording() async {
     String? path = await record.stop();
+    sharedState.setLoading(true);
+    sharedState.setCurrentPath(path!);
     setState(() {
       isRecording = false;
     });
 
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('EEEE \'at\' HH:mm').format(now);
+
     Recording recording = Recording(
       path: path,
-      createdAt: DateTime.now(),
+      createdAt: now,
+      name: formattedDate,
     );
 
     await DatabaseHelper.insertRecording(recording);
@@ -101,6 +118,32 @@ class MainAppState extends State<MainApp> {
     setState(() {
       recordings?.add(recording);
     });
+
+    //transcribe section
+    final apiService = ApiService();
+    final fileBytes = await File(recording.path!).readAsBytes();
+    //large uploads will put it into ram and crash the app
+    const chunkSize = 1024 * 1024; //1MB
+    final chunkCount = (fileBytes.length / chunkSize).ceil();
+    final fileName = p.basename(recording.path!);
+
+    final uploadId = await apiService.initUpload(chunkCount, fileName, fileBytes.length);
+
+    for (var i = 0; i < chunkCount; i++) {
+      final start = i * chunkSize;
+      final end = min(start + chunkSize, fileBytes.length);
+      final chunkBytes = fileBytes.sublist(start, end);
+
+      await apiService.uploadChunk(uploadId, i, chunkBytes.length, chunkBytes);
+    }
+
+    await apiService.completeUpload(uploadId);
+
+    //start transcription
+
+    //Data data = await apiService.fetchTranscription(uploadId, chunkCount, chunkSize, fileName);
+    //print(data.file.name);
+    sharedState.setLoading(true);
   }
 
   Future<List<Recording>> getRecordings() async {
@@ -132,6 +175,14 @@ class MainAppState extends State<MainApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Kubrick Transcriber'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: () {
+              // Add filter logic here
+              }
+            )
+          ],
         ),
         body: Column(
           children: <Widget>[
@@ -142,8 +193,9 @@ class MainAppState extends State<MainApp> {
                 : ListView.builder(
                   itemCount: recordings!.length,
                   itemBuilder: (context, index) {
-                    String fileName = p.basename(recordings![index].path!);
-                    String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(recordings![index].createdAt);
+                    //String fileName = p.basename(recordings![index].path!);
+                    String name = recordings![index].name!;
+                    String formattedDate = DateFormat('yyyy-MM-dd').format(recordings![index].createdAt);
                     return Dismissible(
                       key: Key(recordings![index].path!),
                       direction: DismissDirection.endToStart,
@@ -174,10 +226,11 @@ class MainAppState extends State<MainApp> {
                       },
                       onDismissed: (direction) async {
                         var pathToDelete = recordings![index].path;
+                        var nameToDelete = recordings![index].name;
                         setState(() {
                           recordings!.removeAt(index);
                         });
-                        await DatabaseHelper.deleteRecording(Recording(path: pathToDelete, createdAt: DateTime.now()));
+                        await DatabaseHelper.deleteRecording(Recording(path: pathToDelete, createdAt: DateTime.now(), name: nameToDelete));
                       },
                       background: Container(
                         color: Colors.red,
@@ -188,8 +241,12 @@ class MainAppState extends State<MainApp> {
                         ),
                       ),
                       child: ListTile(
-                        title: Text(fileName),
+                        title: Text(name),
                         subtitle: Text(formattedDate),
+                        trailing: sharedState.currentPath.value == recordings![index].path && sharedState.isLoading.value == true ? const LoadingIndicator(
+                          indicatorType: Indicator.ballRotateChase,
+                          colors: [Color(0xFFE4E4E4)],
+                        ) : null,
                         onTap: () async {
                           if(recordings != null && recordings!.isNotEmpty && index >= 0 && index < recordings!.length) {
                             Navigator.push(

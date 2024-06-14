@@ -1,16 +1,13 @@
-import 'dart:io';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:get/instance_manager.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
-import 'package:kubrick/models/transcription_class.dart';
-import 'package:kubrick/services/ai_api_service.dart';
+import 'package:loading_indicator/loading_indicator.dart';
 import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 import 'package:tuple/tuple.dart';
-
 
 class RecordingInfoScreen extends StatefulWidget {
   final Recording recording;
@@ -24,6 +21,7 @@ class RecordingInfoScreen extends StatefulWidget {
 class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
   late AudioPlayer player;
   late Stream<Duration> positionStream;
+  final sharedState = Get.find<SharedState>();
 
   @override
   void initState() {
@@ -39,31 +37,6 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
     super.dispose();
   }
 
-  Future<void> transcribeAudio() async {
-    final apiService = ApiService();
-    final fileBytes = await File(widget.recording.path!).readAsBytes();
-    //large uploads will put it into ram and crash the app
-    const chunkSize = 1024 * 1024; //1MB
-    final chunkCount = (fileBytes.length / chunkSize).ceil();
-    final fileName = p.basename(widget.recording.path!);
-
-    final uploadId = await apiService.initUpload(chunkCount, fileName, fileBytes.length);
-
-    for (var i = 0; i < chunkCount; i++) {
-      final start = i * chunkSize;
-      final end = min(start + chunkSize, fileBytes.length);
-      final chunkBytes = fileBytes.sublist(start, end);
-
-      await apiService.uploadChunk(uploadId, i, chunkBytes.length, chunkBytes);
-    }
-
-    await apiService.completeUpload(uploadId);
-
-    //start transcription
-    Data data = await apiService.fetchTranscription(uploadId, chunkCount, chunkSize, fileName);
-    print(data.file.name);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,32 +44,36 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(left: 20.0, right: 20.0),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              padding: const EdgeInsets.all(20.0),
-            ),
-              onPressed: () {
-                transcribeAudio();
-              },
-              child: const Text(
-                'Transcribe',
-                style: TextStyle(
-                  fontSize: 15.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
             Expanded(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
+                  if (sharedState.isLoading.value && widget.recording.path == sharedState.currentPath.value) ...[
+                    const Spacer(),
+                    const SizedBox(
+                      width: 150,
+                      height: 100,
+                      child: LoadingIndicator(
+                        indicatorType: Indicator.lineScalePulseOutRapid,
+                        colors: [Color(0xFFE4E4E4)],
+                      ),
+                    ),
+                    const Spacer(),
+                  ] else ...[
+                    Container(
+                      child: const Text('This is the top'),
+                    ),
+                    const Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: <Widget>[
+                            Text('This is the bottom'),
+                          ]
+                        )
+                      ),
+                    )
+                  ],
                   Text(p.basename(widget.recording.path!)),
                   Text(DateFormat('yyyy-MM-dd HH:mm').format(widget.recording.createdAt)),
                   StreamBuilder(
