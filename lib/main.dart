@@ -143,7 +143,7 @@ class MainAppState extends State<MainApp> {
 
     //Data data = await apiService.fetchTranscription(uploadId, chunkCount, chunkSize, fileName);
     //print(data.file.name);
-    sharedState.setLoading(true);
+    sharedState.setLoading(false);
   }
 
   Future<List<Recording>> getRecordings() async {
@@ -244,7 +244,7 @@ class MainAppState extends State<MainApp> {
                         title: Text(name),
                         subtitle: Text(formattedDate),
                         trailing: sharedState.currentPath.value == recordings![index].path && sharedState.isLoading.value == true ? const LoadingIndicator(
-                          indicatorType: Indicator.ballRotateChase,
+                          indicatorType: Indicator.ballClipRotateMultiple,
                           colors: [Color(0xFFE4E4E4)],
                         ) : null,
                         onTap: () async {
@@ -276,6 +276,18 @@ class MainAppState extends State<MainApp> {
                 margin: const EdgeInsets.all(20),
                 child: Column(
                   children: <Widget>[
+                    if (isRecording)
+                    Container(
+                      height: 50,
+                      width: 150,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      child: const LoadingIndicator(
+                        indicatorType: Indicator.lineScalePulseOutRapid,
+                        colors: [Color(0xFFE4E4E4)],
+                      ),
+                    )
+                    else
+                      const SizedBox.shrink(),
                     ElevatedButton(
                       onPressed: () async {
                         if(isRecording){

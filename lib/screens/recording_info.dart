@@ -52,10 +52,10 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
                   if (sharedState.isLoading.value && widget.recording.path == sharedState.currentPath.value) ...[
                     const Spacer(),
                     const SizedBox(
-                      width: 150,
-                      height: 100,
+                      width: 300,
+                      height: 300,
                       child: LoadingIndicator(
-                        indicatorType: Indicator.lineScalePulseOutRapid,
+                        indicatorType: Indicator.ballClipRotateMultiple,
                         colors: [Color(0xFFE4E4E4)],
                       ),
                     ),
