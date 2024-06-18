@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/instance_manager.dart';
-import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:kubrick/controllers/shared_state.dart';
+import 'package:kubrick/main.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/database_helper.dart';
+import 'package:kubrick/widgets/editable_text_widget.dart';
 import 'package:loading_indicator/loading_indicator.dart';
-import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 import 'package:tuple/tuple.dart';
 
 class RecordingInfoScreen extends StatefulWidget {
   final Recording recording;
   final Function onDelete;
-  const RecordingInfoScreen({super.key, required this.recording, required this.onDelete});
+  final Function(String) onSubmitted;
+  const RecordingInfoScreen({super.key, required this.recording, required this.onDelete, required this.onSubmitted});
 
   @override
   _RecordingInfoScreenState createState() => _RecordingInfoScreenState();
@@ -74,8 +76,17 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
                       ),
                     )
                   ],
-                  Text(p.basename(widget.recording.path!)),
-                  Text(DateFormat('yyyy-MM-dd HH:mm').format(widget.recording.createdAt)),
+                  Text(widget.recording.name!),
+                  EditableTextWidget(
+                    initialText: widget.recording.name!,
+                    onSubmitted: (value) {
+                      setState(() {
+                        widget.recording.name = value;
+                        DatabaseHelper.updateRecording(widget.recording);
+                        widget.onSubmitted(value);
+                      });
+                    },
+                  ),
                   StreamBuilder(
                     stream: positionStream,
                     builder: (context, snapshot) {

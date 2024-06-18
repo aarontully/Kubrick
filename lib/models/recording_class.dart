@@ -1,7 +1,7 @@
 class Recording {
   final String? path;
   final DateTime createdAt;
-  final String? name;
+  String? name;
 
   Recording({required this.path, required this.createdAt, required this.name});
 

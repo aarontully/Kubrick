@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static const String databaseName = 'recordings.db';
-  static const String tabeRecordings = 'recordings';
+  static const String tableRecordings = 'recordings';
   static const String tableUploads = 'uploads';
   static const String columnId = 'id';
   static const String columnPath = 'path';
@@ -19,7 +19,7 @@ class DatabaseHelper {
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tabeRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT)",
+            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT)",
           );
           await txn.execute(
             "CREATE TABLE $tableUploads (id INTEGER PRIMARY KEY, recordingPath TEXT, uploadId TEXT, chunkCount INTEGER, uploadedChunks INTEGER, isComplete INTEGER)",
@@ -33,7 +33,7 @@ class DatabaseHelper {
     final db = await initDatabase();
 
     await db.insert(
-      tabeRecordings,
+      tableRecordings,
       recording.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -43,7 +43,7 @@ class DatabaseHelper {
 
   static Future<List<Recording>> getRecordings() async {
     final db = await initDatabase();
-    final List<Map<String, dynamic>> maps = await db.query(tabeRecordings);
+    final List<Map<String, dynamic>> maps = await db.query(tableRecordings);
 
     await db.close();
 
@@ -56,11 +56,24 @@ class DatabaseHelper {
     });
   }
 
+  static Future<void> updateRecording(Recording recording) async {
+    final db = await initDatabase();
+
+    await db.update(
+      tableRecordings,
+      recording.toMap(),
+      where: 'path = ?',
+      whereArgs: [recording.path],
+    );
+
+    await db.close();
+  }
+
   static Future<void> deleteRecording(Recording recording) async {
     final db = await initDatabase();
 
     await db.delete(
-      tabeRecordings,
+      tableRecordings,
       where: 'path = ?',
       whereArgs: [recording.path],
     );
