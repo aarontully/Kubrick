@@ -7,6 +7,7 @@ import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/ai_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
+import 'package:kubrick/utils/chunk_transformer.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -123,21 +124,20 @@ class MainAppState extends State<MainApp> {
 
     //transcribe section
     final apiService = ApiService();
-    final fileBytes = await File(recording.path!).readAsBytes();
-    // TODO: large uploads will put it into ram and crash the app
+    final file = File(recording.path!);
+    final fileSize = await file.length();
     const chunkSize = 1024 * 1024; //1MB
-    final chunkCount = (fileBytes.length / chunkSize).ceil();
+    final chunkCount = (fileSize / chunkSize).ceil();
     final fileName = p.basename(recording.path!);
 
     final uploadId =
-        await apiService.initUpload(chunkCount, fileName, fileBytes.length);
+        await apiService.initUpload(chunkCount, fileName, fileSize);
 
-    for (var i = 0; i < chunkCount; i++) {
-      final start = i * chunkSize;
-      final end = min(start + chunkSize, fileBytes.length);
-      final chunkBytes = fileBytes.sublist(start, end);
-
-      await apiService.uploadChunk(uploadId, i, chunkBytes.length, chunkBytes);
+    final fileStream = file.openRead();
+    int i = 0;
+    await for(var chunk in fileStream.transform(ChunkTransformer(chunkSize))) {
+      await apiService.uploadChunk(uploadId, i, chunk.length, chunk);
+      i++;
     }
 
     await apiService.completeUpload(uploadId);

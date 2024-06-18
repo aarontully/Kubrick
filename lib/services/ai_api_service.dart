@@ -33,8 +33,6 @@ class ApiService {
         'size': size,
       }),
     );
-    print(response.body);
-    print(response);
     final responseBody = jsonDecode(response.body);
     if(responseBody['data'] != null && responseBody['data']['file'] != null) {
       return responseBody['data']['file']['id'];
@@ -43,20 +41,28 @@ class ApiService {
     }
   }
 
-  Future<void> uploadChunk(String fileId, int chunk, int size, List<int> file) async {
-    final url = Uri.parse('$baseUrl/files/$fileId');
-    await http.post(
-      url,
-      headers: <String, String> {
-        'Content-Type': 'application/octet-stream',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'chunk': chunk,
-        'size': size,
-        'file': base64Encode(file),
-      }),
-    );
+  Future<void> uploadChunk(String fileId, int chunk, int size, List<int> file, {int maxRetries = 3}) async {
+    for (var attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        final url = Uri.parse('$baseUrl/files/$fileId');
+        await http.post(
+          url,
+          headers: <String, String> {
+            'Content-Type': 'application/octet-stream',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'chunk': chunk,
+            'size': size,
+            'file': base64Encode(file),
+          }),
+        );
+        // If the upload was successful, break out of the loop
+        break;
+      } catch (e) {
+        // TODO: inform the user that connection was unsuccessful and retry later
+      }
+    }
   }
 
   Future<void> completeUpload(String fileId) async {
