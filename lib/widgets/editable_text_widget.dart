@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:kubrick/main.dart';
 
 class EditableTextWidget extends StatefulWidget {
   final String initialText;
   final Function(String) onSubmitted;
+  final TextStyle? style;
 
   const EditableTextWidget({
     super.key,
     required this.initialText,
     required this.onSubmitted,
+    this.style,
   });
 
   @override
@@ -47,7 +48,10 @@ class _EditableTextWidgetState extends State<EditableTextWidget> {
   }
 
   Widget _buildText() {
-    return Text(widget.initialText);
+    return Text(
+      widget.initialText,
+      style: widget.style ?? TextStyle(fontSize: 14),
+    );
   }
 
   Widget _buildTextField() {
@@ -55,6 +59,7 @@ class _EditableTextWidgetState extends State<EditableTextWidget> {
       controller: _controller,
       focusNode: _focusNode,
       autofocus: true,
+      style: widget.style ?? TextStyle(fontSize: 14),
       onFieldSubmitted: (value) {
         widget.onSubmitted(value);
         setState(() {

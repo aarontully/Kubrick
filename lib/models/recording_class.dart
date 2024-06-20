@@ -1,15 +1,21 @@
-class Recording {
-  final String? path;
-  final DateTime createdAt;
-  String? name;
+import 'package:get/get.dart';
 
-  Recording({required this.path, required this.createdAt, required this.name});
+class Recording extends GetxController {
+  RxString path = ''.obs;
+  Rx<DateTime> createdAt = DateTime.now().obs;
+  RxString name = ''.obs;
+
+  Recording({required String path, required DateTime createdAt, required String name}) {
+    this.path.value = path;
+    this.createdAt.value = createdAt;
+    this.name.value = name;
+  }
 
   Map<String, dynamic> toMap() {
     return {
-      'path': path,
-      'createdAt': createdAt.toIso8601String(),
-      'name': name,
+      'path': path.value,
+      'createdAt': createdAt.value.toIso8601String(),
+      'name': name.value,
     };
   }
 

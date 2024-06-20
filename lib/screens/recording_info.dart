@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:get/instance_manager.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/get_instance.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
-import 'package:kubrick/main.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/widgets/editable_text_widget.dart';
 import 'package:loading_indicator/loading_indicator.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:tuple/tuple.dart';
+import 'package:rxdart/rxdart.dart';
+
 
 class RecordingInfoScreen extends StatefulWidget {
   final Recording recording;
-  final Function onDelete;
-  final Function(String) onSubmitted;
-  const RecordingInfoScreen({super.key, required this.recording, required this.onDelete, required this.onSubmitted});
+  const RecordingInfoScreen({super.key, required this.recording});
 
   @override
   _RecordingInfoScreenState createState() => _RecordingInfoScreenState();
@@ -29,7 +30,7 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
   void initState() {
     super.initState();
     player = AudioPlayer();
-    player.setFilePath(widget.recording.path!);
+    player.setFilePath(widget.recording.path.value);
     positionStream = player.positionStream;
   }
 
@@ -76,17 +77,14 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
                       ),
                     )
                   ],
-                  Text(widget.recording.name!),
-                  EditableTextWidget(
-                    initialText: widget.recording.name!,
+                  Obx(() => EditableTextWidget(
+                    initialText: widget.recording.name.value,
                     onSubmitted: (value) {
-                      setState(() {
-                        widget.recording.name = value;
-                        DatabaseHelper.updateRecording(widget.recording);
-                        widget.onSubmitted(value);
-                      });
+                      widget.recording.name.value = value;
+                      DatabaseHelper.updateRecording(widget.recording);
+                      Get.find<RecordingsController>().updateRecording(widget.recording);
                     },
-                  ),
+                  )),
                   StreamBuilder(
                     stream: positionStream,
                     builder: (context, snapshot) {

@@ -63,7 +63,7 @@ class DatabaseHelper {
       tableRecordings,
       recording.toMap(),
       where: 'path = ?',
-      whereArgs: [recording.path],
+      whereArgs: [recording.path.value],
     );
 
     await db.close();
@@ -75,7 +75,7 @@ class DatabaseHelper {
     await db.delete(
       tableRecordings,
       where: 'path = ?',
-      whereArgs: [recording.path],
+      whereArgs: [recording.path.value],
     );
 
     await db.close();
