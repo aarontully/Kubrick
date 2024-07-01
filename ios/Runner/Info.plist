@@ -47,5 +47,7 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs access to the microphone to record audio.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Access documents to upload audio files</string>
 </dict>
 </plist>

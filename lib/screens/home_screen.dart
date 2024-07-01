@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart';
+import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
@@ -9,7 +13,11 @@ import 'package:kubrick/services/recording_service.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
 import 'package:kubrick/widgets/recording_list.dart';
 import 'package:loading_indicator/loading_indicator.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as p;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +28,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
-  RxList<Recording> recordings = <Recording>[].obs;
+  //RxList<Recording> recordings = <Recording>[].obs;
   bool isRecording = false;
   var sharedState = Get.find<SharedState>();
   var recordingsController = Get.find<RecordingsController>();
+  final Uuid uuid = const Uuid();
 
   @override
   void initState() {
@@ -39,23 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> requestPermissions() async {
-    PermissionStatus micStatus = await Permission.microphone.status;
-    PermissionStatus storageStatus = await Permission.storage.status;
-
-    //await controller.checkPermission();
-
-    if (micStatus.isDenied || storageStatus.isDenied) {
-      Map<Permission, PermissionStatus> statuses = await [
+    Map<Permission, PermissionStatus> statuses = await [
         Permission.microphone,
         Permission.storage,
+        Permission.audio
       ].request();
 
-      if (!(statuses[Permission.microphone]!.isGranted &&
-          statuses[Permission.storage]!.isGranted)) {
-        //didnt get all the permissions - handle this
-        return;
-      }
-    }
+    //await controller.checkPermission();
   }
 
   Future startRecording() async {
@@ -138,25 +137,75 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     else
                       const SizedBox.shrink(),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (isRecording) {
-                          await stopRecording();
-                        } else {
-                          await startRecording();
-                        }
-                        setState(() {});
-                      },
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(10),
-                        backgroundColor: Colors.red[600],
-                        iconColor: Colors.red[900],
-                      ),
-                      child: Icon(
-                        isRecording ? Icons.stop : Icons.mic_rounded,
-                        size: 60,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: Container(),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Center(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (isRecording) {
+                                  await stopRecording();
+                                } else {
+                                  await startRecording();
+                                }
+                                setState(() {});
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(10),
+                                backgroundColor: Colors.red[600],
+                                iconColor: Colors.red[900],
+                              ),
+                              child: Icon(
+                                isRecording ? Icons.stop : Icons.mic_rounded,
+                                size: 60,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+                                if(result != null) {
+                                  File file = File(result.files.single.path!);
+                                  Directory dir = await getApplicationDocumentsDirectory();
+                                  final path = dir.path;
+                                  final String ext = p.extension(file.path);
+                                  final newFile = await file.copy('$path/${uuid.v1()}$ext');
+                                  DateTime now = DateTime.now();
+                                  String formattedDate = DateFormat('EEEE \'at\' HH:mm').format(now);
+                                  Recording addedRecording = Recording(
+                                    path: newFile.path,
+                                    createdAt: now,
+                                    name: formattedDate
+                                  );
+                                  await DatabaseHelper.insertRecording(addedRecording);
+                                  await recordingService.transcribeRecording(addedRecording);
+                                  recordingsController.fetchRecordings();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(10),
+                                iconColor: Colors.grey[100],
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                size: 20,
+                              )
+                            ),
+                          ),
+                        )
+                      ],
                     ),
                   ],
                 ),

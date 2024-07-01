@@ -78,10 +78,10 @@ class RecordingList extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop(false);
                           recording.name.value = newName;
                           DatabaseHelper.updateRecording(recording);
                           Get.find<RecordingsController>().updateRecording(recording);
+                          Navigator.of(context).pop(false);
                         },
                         child: const Text('Save'),
                       ),
