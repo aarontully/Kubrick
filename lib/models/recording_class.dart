@@ -1,12 +1,13 @@
 import 'package:get/get.dart';
 
 class Recording extends GetxController {
+  String? uploadId;
   RxString path = ''.obs;
   Rx<DateTime> createdAt = DateTime.now().obs;
   RxString name = ''.obs;
   RxString status = ''.obs;
 
-  Recording({required String path, required DateTime createdAt, required String name, String status = 'Not Uploaded'}) {
+  Recording({required String path, required DateTime createdAt, required String name, String status = 'Not Uploaded', this.uploadId}){
     this.path.value = path;
     this.createdAt.value = createdAt;
     this.name.value = name;
@@ -15,6 +16,7 @@ class Recording extends GetxController {
 
   Map<String, dynamic> toMap() {
     return {
+      'uploadId': uploadId,
       'path': path.value,
       'createdAt': createdAt.value.toIso8601String(),
       'name': name.value,
@@ -28,6 +30,7 @@ class Recording extends GetxController {
       createdAt: DateTime.parse(map['createdAt']),
       name: map['name'],
       status: map['status'] ?? 'Not Uploaded',
+      uploadId: map['uploadId'],
     );
   }
 }

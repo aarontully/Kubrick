@@ -38,6 +38,7 @@ class FileApiService {
         'size': size,
       }),
     );
+
     final responseBody = jsonDecode(response.body);
     if(responseBody['data'] != null && responseBody['data']['file'] != null) {
       return responseBody['data']['file']['id'];
@@ -88,6 +89,20 @@ class FileApiService {
   }
 
   // DELETE: /files/{file_id}
+  Future<void> deleteFile(String fileId) async {
+    final url = Uri.parse('$baseUrl/files/$fileId');
+    final response = await http.delete(
+      url,
+      headers: <String, String> {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if(response.statusCode != 200) {
+      throw Exception('Failed to delete file');
+    }
+  }
 
   // POST: /files/{file_id}/complete
   Future<void> completeUpload(String fileId) async {

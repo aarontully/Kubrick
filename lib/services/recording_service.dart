@@ -52,7 +52,9 @@ class RecordingService {
         recording.update();
         await DatabaseHelper.updateRecording(recording);
       }
-      sharedState.setProcessing(true);
+
+      // isProcessing - bool
+      sharedState.setProcessing(false);
       return recording;
     }
     return null;
@@ -66,6 +68,8 @@ class RecordingService {
     final fileName = p.basename(recording.path.value);
 
     final uploadId = await apiService.initUpload(chunkCount, fileName, fileSize);
+    recording.uploadId = uploadId;
+    await DatabaseHelper.updateUploadId(recording, uploadId);
 
   // create a filestream for reading
   final fileStream = file.openRead();

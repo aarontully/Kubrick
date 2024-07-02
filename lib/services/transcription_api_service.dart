@@ -14,15 +14,9 @@ class TranscriptionApiService {
       headers: <String, String> {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'chunks': chunks,
-        'size': size,
-        'name': name,
-      }),
+      }
     );
-    print(response.body);
-    print(response.statusCode);
+
     if(response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
       return Data.fromJson(responseBody['data']);

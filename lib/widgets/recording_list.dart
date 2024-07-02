@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
+import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/widgets/recording_list_tile.dart';
 
 class RecordingList extends StatelessWidget {
@@ -17,10 +18,6 @@ class RecordingList extends StatelessWidget {
     required this.onPlay,
     required this.onDelete,
   });
-
-  Future deleteRecording(Recording recording) async {
-    await DatabaseHelper.deleteRecording(recording);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +90,9 @@ class RecordingList extends StatelessWidget {
             }
           },
           onDismissed: (direction) async {
-            await deleteRecording(recording);
+            var fileApiService = FileApiService();
+            await DatabaseHelper.deleteRecording(recording);
+            await fileApiService.deleteFile(recording.uploadId!);
             recordings.removeAt(index);
           },
           background: Container(

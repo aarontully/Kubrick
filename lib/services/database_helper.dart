@@ -12,6 +12,7 @@ class DatabaseHelper {
   static const String columnCreatedAt = 'createdAt';
   static const String columnName = 'name';
   static const String columnStatus = 'status';
+  static const String columnUploadId = 'status';
 
   static Future<Database> initDatabase() async {
     return openDatabase(
@@ -20,7 +21,7 @@ class DatabaseHelper {
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT)",
+            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT)",
           );
           await txn.execute(
             "CREATE TABLE $tableUploads (id INTEGER PRIMARY KEY, recordingPath TEXT, uploadId TEXT, chunkCount INTEGER, uploadedChunks INTEGER, isComplete INTEGER)",
@@ -54,6 +55,7 @@ class DatabaseHelper {
         createdAt: DateTime.parse(maps[index][columnCreatedAt]),
         name: maps[index][columnName],
         status: maps[index][columnStatus],
+        uploadId: maps[index][columnUploadId],
       );
     });
   }
@@ -69,6 +71,17 @@ class DatabaseHelper {
     );
 
     await db.close();
+  }
+
+  static Future<void> updateUploadId(Recording recording, String uploadId) async {
+    final db = await initDatabase();
+
+    await db.update(
+      tableRecordings,
+      {'uploadId': uploadId},
+      where: "path = ?",
+      whereArgs: [recording.path.value],
+    );
   }
 
   static Future<void> deleteRecording(Recording recording) async {
