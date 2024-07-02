@@ -1,23 +1,16 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart';
-import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/recording_service.dart';
+import 'package:kubrick/utils/file_picker_util.dart';
+import 'package:kubrick/utils/permission_checker.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
 import 'package:kubrick/widgets/recording_list.dart';
 import 'package:loading_indicator/loading_indicator.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:uuid/uuid.dart';
-import 'package:path/path.dart' as p;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,16 +21,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
-  //RxList<Recording> recordings = <Recording>[].obs;
   bool isRecording = false;
   var sharedState = Get.find<SharedState>();
   var recordingsController = Get.find<RecordingsController>();
-  final Uuid uuid = const Uuid();
 
   @override
   void initState() {
     super.initState();
-    requestPermissions().then((_) {
+    PermissionChecker.requestPermissions().then((_) {
       recordingsController.fetchRecordings();
     });
   }
@@ -45,16 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     super.dispose();
-  }
-
-  Future<void> requestPermissions() async {
-    Map<Permission, PermissionStatus> statuses = await [
-        Permission.microphone,
-        Permission.storage,
-        Permission.audio
-      ].request();
-
-    //await controller.checkPermission();
   }
 
   Future startRecording() async {
@@ -71,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future stopRecording() async {
     try {
       Recording? recording = await recordingService.stopRecording();
+      sharedState.setCurrentRecording(recording);
       if (recording != null) {
         isRecording = false;
         Get.find<RecordingsController>().recordings.add(recording);
@@ -109,9 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (recording) => RecordingList(
                 recordings: recordingsController.recordings,
                 onPlay: (Recording recording) {
-                  sharedState.currentPath.value = recording.path.value;
-                  sharedState.isLoading.value = true;
-                  setState(() {});
                 },
                 onDelete: (Recording recording) {
                   DatabaseHelper.deleteRecording(recording);
@@ -174,24 +153,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             alignment: Alignment.centerLeft,
                             child: ElevatedButton(
                               onPressed: () async {
-                                FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
-                                if(result != null) {
-                                  File file = File(result.files.single.path!);
-                                  Directory dir = await getApplicationDocumentsDirectory();
-                                  final path = dir.path;
-                                  final String ext = p.extension(file.path);
-                                  final newFile = await file.copy('$path/${uuid.v1()}$ext');
-                                  DateTime now = DateTime.now();
-                                  String formattedDate = DateFormat('EEEE \'at\' HH:mm').format(now);
-                                  Recording addedRecording = Recording(
-                                    path: newFile.path,
-                                    createdAt: now,
-                                    name: formattedDate
-                                  );
-                                  await DatabaseHelper.insertRecording(addedRecording);
-                                  await recordingService.transcribeRecording(addedRecording);
-                                  recordingsController.fetchRecordings();
-                                }
+                                await FilePickerUtil.pickAndSaveFile();
+                                recordingsController.fetchRecordings();
                               },
                               style: ElevatedButton.styleFrom(
                                 shape: const CircleBorder(),

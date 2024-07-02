@@ -52,7 +52,7 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  if (sharedState.isLoading.value && widget.recording.path == sharedState.currentPath.value) ...[
+                  if (sharedState.isLoading.value && widget.recording.path.value == sharedState.currentPath.value) ...[
                     const Spacer(),
                     const SizedBox(
                       width: 300,

@@ -1,8 +1,11 @@
 import 'package:get/get.dart';
+import 'package:kubrick/models/recording_class.dart';
 
 class SharedState extends GetxController {
-  var isLoading = false.obs;
-  var currentPath = ''.obs;
+  RxBool isLoading = false.obs;
+  RxString currentPath = ''.obs;
+  RxBool isProcessing = false.obs;
+  Rx<Recording?> currentRecording = Rx<Recording?>(null);
 
   void setLoading(bool value) {
     isLoading.value = value;
@@ -10,5 +13,13 @@ class SharedState extends GetxController {
 
   void setCurrentPath(String path) {
     currentPath.value = path;
+  }
+
+  void setProcessing(bool value) {
+    isProcessing.value = value;
+  }
+
+  void setCurrentRecording(Recording? recording){
+    currentRecording.value = recording;
   }
 }

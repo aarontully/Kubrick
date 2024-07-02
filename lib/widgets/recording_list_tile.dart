@@ -9,22 +9,24 @@ import 'package:loading_indicator/loading_indicator.dart';
 class RecordingListTile extends StatelessWidget {
   final Recording recording;
   final SharedState sharedState = Get.find<SharedState>();
+  final bool isUploaded;
 
   RecordingListTile({
     super.key,
     required this.recording,
-  });
+  }) : isUploaded = recording.status.value == 'Uploaded';
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(recording.name.value),
       subtitle: Text(DateFormat('yyyy-MM-dd').format(recording.createdAt.value)),
-      trailing: sharedState.currentPath.value == recording.path && sharedState.isLoading.value == true ?
+      trailing: sharedState.isProcessing.value == true && sharedState.currentRecording.value == recording ?
       const LoadingIndicator(
         indicatorType: Indicator.ballClipRotateMultiple,
         colors: [Color(0xFFE4E4E4)],
-      ) : null,
+      ) : isUploaded
+        ? const Icon(Icons.cloud_done) : const Icon(Icons.cloud_off),
       onTap: () async {
         Navigator.push(
           context,

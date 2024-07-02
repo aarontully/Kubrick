@@ -1,8 +1,9 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kubrick/models/recording_class.dart';
-import 'package:kubrick/services/ai_api_service.dart';
+import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/utils/chunk_transformer.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,11 +11,14 @@ import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path/path.dart' as p;
 
+import '../controllers/shared_state.dart';
+
 class RecordingService {
   final AudioRecorder record = AudioRecorder();
   final Uuid uuid = const Uuid();
   final DatabaseHelper databaseHelper = DatabaseHelper();
-  final ApiService apiService =ApiService();
+  final FileApiService apiService = FileApiService();
+  final sharedState = Get.find<SharedState>();
 
   Future<String> startRecording() async {
     if (await record.hasPermission()) {
@@ -27,6 +31,8 @@ class RecordingService {
   }
 
   Future<Recording?> stopRecording() async {
+    sharedState.setProcessing(true);
+
     String? path = await record.stop();
 
     if (path != null) {
@@ -40,13 +46,19 @@ class RecordingService {
       );
 
       await DatabaseHelper.insertRecording(recording);
-      await transcribeRecording(recording);
+      final response = await transcribeRecording(recording);
+      if(response) {
+        recording.status.value = 'Uploaded';
+        recording.update();
+        await DatabaseHelper.updateRecording(recording);
+      }
+      sharedState.setProcessing(true);
       return recording;
     }
     return null;
   }
 
-  Future<void> transcribeRecording(Recording recording) async {
+  Future<bool> transcribeRecording(Recording recording) async {
     final file = File(recording.path.value);
     final fileSize = await file.length();
     const chunkSize = 1024 * 1024; //1MB
@@ -55,14 +67,28 @@ class RecordingService {
 
     final uploadId = await apiService.initUpload(chunkCount, fileName, fileSize);
 
-    final fileStream = file.openRead();
-    int i = 0;
-    await for(var chunk in fileStream.transform(ChunkTransformer(chunkSize))) {
-      await apiService.uploadChunk(uploadId, i, chunk.length, chunk);
-      i++;
+  // create a filestream for reading
+  final fileStream = file.openRead();
+  final transformer = ChunkTransformer(chunkSize);
+
+  // iterate through each chunk and upload to the server.
+  try {
+    int chunkindex = 1;
+    await for (var chunk in fileStream.transform(transformer)) {
+      await apiService.uploadChunk(uploadId, chunkindex, chunk.length, chunk);
+      chunkindex++;
     }
 
     await apiService.completeUpload(uploadId);
+    return true;
+
+  } catch (e) {
+    throw Exception(e);
+  }
+
+    // [data][{transcription}]
+    // [data]['id']
+    // [data]['error]
 
     //start transcription
     //Data data = await apiService.fetchTranscription(uploadId, chunkCount, chunkSize, fileName);

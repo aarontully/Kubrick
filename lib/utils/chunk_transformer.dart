@@ -1,52 +1,34 @@
 import 'dart:async';
+import 'dart:typed_data';
 
-class ChunkTransformer extends StreamTransformerBase<List<int>, List<int>> {
+class ChunkTransformer extends StreamTransformerBase<List<int>, Uint8List> {
   final int chunkSize;
 
   ChunkTransformer(this.chunkSize);
 
   @override
-  Stream<List<int>> bind(Stream<List<int>> stream) {
-    StreamController<List<int>>? controller;
-    StreamSubscription<List<int>>? subscription;
+  Stream<Uint8List> bind(Stream<List<int>> stream) {
+    List<int> buffer = [];
 
-    controller = StreamController<List<int>>(
-      onListen: () {
-        List<int> buffer = [];
-
-        void handleData(List<int> data) {
+    return stream.transform(
+      StreamTransformer.fromHandlers(
+        handleData: (data, sink) {
           buffer.addAll(data);
           while (buffer.length >= chunkSize) {
-            controller!.add(buffer.sublist(0, chunkSize));
+            sink.add(Uint8List.fromList(buffer.sublist(0, chunkSize)));
             buffer = buffer.sublist(chunkSize);
           }
-        }
-
-        void handleError(Object error, StackTrace stackTrace) {
-          controller!.addError(error, stackTrace);
-        }
-
-        void handleDone() {
+        },
+        handleError: (error, stackTrace, sink) {
+          sink.addError(error, stackTrace);
+        },
+        handleDone: (sink) {
           if (buffer.isNotEmpty) {
-            controller!.add(buffer);
+            sink.add(Uint8List.fromList(buffer));
           }
-          controller!.close();
-        }
-
-        subscription = stream.listen(handleData,
-            onError: handleError, onDone: handleDone, cancelOnError: false);
-      },
-      onPause: ([Future<dynamic>? resumeSignal]) {
-        subscription!.pause(resumeSignal);
-      },
-      onResume: () {
-        subscription!.resume();
-      },
-      onCancel: () {
-        return subscription!.cancel();
-      },
+          sink.close();
+        },
+      ),
     );
-
-    return controller.stream;
   }
 }
