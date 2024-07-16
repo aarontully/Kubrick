@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
@@ -46,6 +47,10 @@ class RecordingService {
       );
 
       await DatabaseHelper.insertRecording(recording);
+
+      Get.find<RecordingsController>().recordings.add(recording);
+      Get.find<RecordingsController>().fetchRecordings();
+
       final response = await transcribeRecording(recording);
       if(response) {
         recording.status.value = 'Uploaded';
