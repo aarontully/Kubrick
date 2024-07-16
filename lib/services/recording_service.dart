@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
+import 'package:kubrick/services/transcription_api_service.dart';
 import 'package:kubrick/utils/chunk_transformer.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -18,6 +19,7 @@ class RecordingService {
   final Uuid uuid = const Uuid();
   final DatabaseHelper databaseHelper = DatabaseHelper();
   final FileApiService apiService = FileApiService();
+  final TranscriptionApiService transcriptionService = TranscriptionApiService();
   final sharedState = Get.find<SharedState>();
 
   Future<String> startRecording() async {
@@ -31,8 +33,6 @@ class RecordingService {
   }
 
   Future<Recording?> stopRecording() async {
-    sharedState.setProcessing(true);
-
     String? path = await record.stop();
 
     if (path != null) {
@@ -49,12 +49,9 @@ class RecordingService {
       final response = await transcribeRecording(recording);
       if(response) {
         recording.status.value = 'Uploaded';
-        recording.update();
         await DatabaseHelper.updateRecording(recording);
       }
 
-      // isProcessing - bool
-      sharedState.setProcessing(false);
       return recording;
     }
     return null;
@@ -68,34 +65,36 @@ class RecordingService {
     final fileName = p.basename(recording.path.value);
 
     final uploadId = await apiService.initUpload(chunkCount, fileName, fileSize);
+    print('recording service ' + uploadId);
     recording.uploadId = uploadId;
-    await DatabaseHelper.updateUploadId(recording, uploadId);
+    await DatabaseHelper.updateRecording(recording);
 
-  // create a filestream for reading
-  final fileStream = file.openRead();
-  final transformer = ChunkTransformer(chunkSize);
+    // create a filestream for reading
+    final fileStream = file.openRead();
+    final transformer = ChunkTransformer(chunkSize);
 
-  // iterate through each chunk and upload to the server.
-  try {
-    int chunkindex = 1;
-    await for (var chunk in fileStream.transform(transformer)) {
-      await apiService.uploadChunk(uploadId, chunkindex, chunk.length, chunk);
-      chunkindex++;
+    // iterate through each chunk and upload to the server.
+    try {
+      int chunkindex = 1;
+      await for (var chunk in fileStream.transform(transformer)) {
+        await apiService.uploadChunk(uploadId, chunkindex, chunk.length, chunk);
+        chunkindex++;
+      }
+
+      await apiService.completeUpload(uploadId);
+
+      final transcriptionId = await transcriptionService.postTranscription(uploadId);
+      recording.transcriptionId = transcriptionId;
+      await DatabaseHelper.updateRecording(recording);
+
+      final transcriptionResponse = await transcriptionService.pollTranscription(uploadId, transcriptionId);
+      recording.transcription = transcriptionResponse;
+      await DatabaseHelper.updateRecording(recording);
+
+      return true;
+
+    } catch (e) {
+      throw Exception(e);
     }
-
-    await apiService.completeUpload(uploadId);
-    return true;
-
-  } catch (e) {
-    throw Exception(e);
-  }
-
-    // [data][{transcription}]
-    // [data]['id']
-    // [data]['error]
-
-    //start transcription
-    //Data data = await apiService.fetchTranscription(uploadId, chunkCount, chunkSize, fileName);
-    //print(data.file.name);
   }
 }

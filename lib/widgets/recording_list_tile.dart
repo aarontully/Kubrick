@@ -21,7 +21,7 @@ class RecordingListTile extends StatelessWidget {
     return ListTile(
       title: Text(recording.name.value),
       subtitle: Text(DateFormat('yyyy-MM-dd').format(recording.createdAt.value)),
-      trailing: sharedState.isProcessing.value == true && sharedState.currentRecording.value == recording ?
+      trailing: sharedState.isProcessing.value == true ?
       const LoadingIndicator(
         indicatorType: Indicator.ballClipRotateMultiple,
         colors: [Color(0xFFE4E4E4)],

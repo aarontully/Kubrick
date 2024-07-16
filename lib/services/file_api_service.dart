@@ -90,6 +90,7 @@ class FileApiService {
 
   // DELETE: /files/{file_id}
   Future<void> deleteFile(String fileId) async {
+    print('Deleting file $fileId');
     final url = Uri.parse('$baseUrl/files/$fileId');
     final response = await http.delete(
       url,
@@ -100,6 +101,7 @@ class FileApiService {
     );
 
     if(response.statusCode != 200) {
+      print('Status code: ${response.statusCode}. Response: ${response.body}');
       throw Exception('Failed to delete file');
     }
   }

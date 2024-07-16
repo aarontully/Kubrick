@@ -94,6 +94,7 @@ class RecordingList extends StatelessWidget {
             await DatabaseHelper.deleteRecording(recording);
             await fileApiService.deleteFile(recording.uploadId!);
             recordings.removeAt(index);
+            Get.find<RecordingsController>().update();
           },
           background: Container(
             color: Colors.orange,

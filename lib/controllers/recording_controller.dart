@@ -14,6 +14,7 @@ class RecordingsController extends GetxController {
   void fetchRecordings() async {
     List<Recording> fetchedRecordings = await DatabaseHelper.getRecordings();
     if (fetchedRecordings.isNotEmpty) {
+      recordings.clear();
       recordings.addAll(fetchedRecordings);
     }
   }
