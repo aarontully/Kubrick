@@ -5,7 +5,7 @@ import 'package:kubrick/widgets/player_widget.dart';
 
 class InfoTabController extends StatefulWidget {
   final String createdAt;
-  final double duration;
+  final String duration;
   final String summary;
   final String transcription;
   final Recording recording;
@@ -60,7 +60,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                 ),
                 ListTile(
                   title: const Text('Duration'),
-                  subtitle: Text('${widget.duration} seconds'),
+                  subtitle: Text('${widget.duration}'),
                 ),
                 ListTile(
                   title: const Text('Summary'),

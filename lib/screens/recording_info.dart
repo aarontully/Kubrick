@@ -46,8 +46,8 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
         ),
       )
       : InfoTabController(
-        createdAt: widget.recording.transcription?['data']['transcription']['completed_at'] ?? 'No date',
-        duration: widget.recording.transcription?['data']['transcription']['result']['metadata']['duration'] ?? 0.0,
+        createdAt: formatDate(widget.recording.transcription?['data']['transcription']['completed_at'] ?? 'No date'),
+        duration: formatDuration(widget.recording.transcription?['data']['transcription']['result']['metadata']['duration'] ?? 0.0),
         summary: widget.recording.transcription?['data']['transcription']['result']['results']['summary']['short'] ?? 'No summary',
         transcription: widget.recording.transcription?['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['transcript'] ?? 'No transcription',
         recording: widget.recording,
