@@ -8,12 +8,15 @@ class Recording extends GetxController {
   Rx<DateTime> createdAt = DateTime.now().obs;
   RxString name = ''.obs;
   RxString status = ''.obs;
+  Map<String, dynamic> metadata = {};
 
-  Recording({required String path, required DateTime createdAt, required String name, String status = 'Not Uploaded', this.uploadId, this.transcriptionId, this.transcription}){
+  Recording({required String path, required DateTime createdAt, required String name,
+  String status = 'Not Uploaded', this.uploadId, this.transcriptionId, this.transcription, Map<String, dynamic>? metadata}) {
     this.path.value = path;
     this.createdAt.value = createdAt;
     this.name.value = name;
     this.status.value = status;
+    this.metadata = metadata ?? this.metadata;
   }
 
   Map<String, dynamic> toMap() {
@@ -25,6 +28,7 @@ class Recording extends GetxController {
       'status': status.value,
       'transcriptionId': transcriptionId ,
       'transcription':  transcription,
+      'metadata': metadata,
     };
   }
 
@@ -37,6 +41,7 @@ class Recording extends GetxController {
       uploadId: map['uploadId'],
       transcriptionId: map['transcriptionId'],
       transcription: map['transcription'],
+      metadata: map['metadata'] != null ? map['metadata'] as Map<String, dynamic> : {},
     );
   }
 }

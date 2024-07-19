@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/file_api_service.dart';
@@ -23,27 +22,28 @@ class RecordingService {
   final TranscriptionApiService transcriptionService = TranscriptionApiService();
   final sharedState = Get.find<SharedState>();
 
-  Future<String> startRecording() async {
+  Future<String> startRecording(Map<String, dynamic> metadata) async {
     if (await record.hasPermission()) {
       Directory directory = await getApplicationDocumentsDirectory();
-      String path = '${directory.path}/${uuid.v1()}.aac';
+      String path = '${directory.path}/${metadata['shootDay']}_${metadata['contestant']}_${metadata['camera']}_${metadata['audio']}_${metadata['timecode'][0]}_${metadata['timecode'][1]}_${metadata['timecode'][2]}_${metadata['producer']}.m4a';
       await record.start(const RecordConfig(), path: path);
+      print(path);
       return path;
     }
     throw Exception('Could not start recording');
   }
 
-  Future<Recording?> stopRecording() async {
+  Future<Recording?> stopRecording(Map<String, dynamic> metadata) async {
     String? path = await record.stop();
 
     if (path != null) {
       DateTime now = DateTime.now();
-      String formattedDate = DateFormat('EEEE \'at\' HH:mm').format(now);
+      String fileName = p.basename(path);
 
       Recording recording = Recording(
         path: path,
         createdAt: now,
-        name: formattedDate,
+        name: fileName,
       );
 
       await DatabaseHelper.insertRecording(recording);

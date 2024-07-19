@@ -22,7 +22,7 @@ class DatabaseHelper {
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT)",
+            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT)",
           );
           /* await txn.execute(
             "CREATE TABLE $tableUploads (id INTEGER PRIMARY KEY, recordingPath TEXT, uploadId TEXT, chunkCount INTEGER, uploadedChunks INTEGER, isComplete INTEGER)",
@@ -36,10 +36,11 @@ class DatabaseHelper {
     final db = await initDatabase();
 
     final transcriptionJson = jsonEncode(recording.transcription);
+    final metadataJson = jsonEncode(recording.metadata);
 
     await db.insert(
       tableRecordings,
-      recording.toMap()..['transcription'] = transcriptionJson,
+      recording.toMap()..['transcription'] = transcriptionJson..['metadata'] = metadataJson,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
@@ -54,6 +55,7 @@ class DatabaseHelper {
 
     return List.generate(maps.length, (index) {
       final transcription = jsonDecode(maps[index]['transcription']);
+      final metadata = jsonDecode(maps[index]['metadata']);
 
       return Recording(
         path: maps[index][columnPath],
@@ -63,6 +65,7 @@ class DatabaseHelper {
         uploadId: maps[index][columnUploadId],
         transcription: transcription,
         transcriptionId: maps[index]['transcriptionId'],
+        metadata: metadata,
       );
     });
   }
@@ -71,10 +74,11 @@ class DatabaseHelper {
     final db = await initDatabase();
 
     final transcriptionJson = jsonEncode(recording.transcription);
+    final metadataJson = jsonEncode(recording.metadata);
 
     await db.update(
       tableRecordings,
-      recording.toMap()..['transcription'] = transcriptionJson,
+      recording.toMap()..['transcription'] = transcriptionJson..['metadata'] = metadataJson,
       where: 'path = ?',
       whereArgs: [recording.path.value],
     );

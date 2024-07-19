@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/widgets/player_widget.dart';
 
 class InfoTabController extends StatefulWidget {
@@ -18,6 +19,7 @@ class InfoTabController extends StatefulWidget {
 
 class _InfoTabControllerState extends State<InfoTabController> {
   late AudioPlayer player = AudioPlayer();
+  final FileApiService fileApiService = FileApiService();
 
   @override
   void initState() {
@@ -49,6 +51,24 @@ class _InfoTabControllerState extends State<InfoTabController> {
             ],
           ),
           title: const Text('Recording Info'),
+          actions: [
+            PopupMenuButton(
+              icon: const Icon(Icons.menu),
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    child: Text('Download'),
+                    value: 'download',
+                  )
+                ];
+              },
+              onSelected: (value) {
+                if (value == 'download') {
+                  fileApiService.downloadFile(widget.recording.uploadId!);
+                }
+              },
+            )
+          ],
         ),
         body: TabBarView(
           children: [

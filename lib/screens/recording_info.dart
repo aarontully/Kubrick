@@ -26,6 +26,7 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
   }
 
   String formatDate(String dateInString) {
+    if(dateInString == 'No date') return dateInString;
     DateTime date = DateTime.parse(dateInString);
     String formattedDate = DateFormat('dd MMMM yyyy').format(date);
     return formattedDate;

@@ -22,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
   var sharedState = Get.find<SharedState>();
+  Map<String, dynamic>? metadata;
 
   @override
   void initState() {
@@ -37,11 +38,155 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future startRecording() async {
-    try {
-      await recordingService.startRecording();
-      sharedState.setRecording(true);
-    } catch (e) {
-      print(e);
+    metadata = await showDialog<Map<String, dynamic>>(
+    context: context,
+    builder: (BuildContext context) {
+      var dialogMetadata = <String, dynamic>{};
+      var formKey = GlobalKey<FormState>();
+      return Theme(
+        data: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.purple,
+            brightness: Brightness.dark,
+          ),
+          textTheme: TextTheme(
+            displayLarge:
+                const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
+            titleLarge: GoogleFonts.oswald(
+              fontSize: 30,
+              fontStyle: FontStyle.italic,
+            ),
+            bodyMedium: GoogleFonts.merriweather(),
+            displaySmall: GoogleFonts.pacifico(),
+          ),
+        ),
+        child: AlertDialog(
+          title: const Text('Enter Recording Details'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Shoot Day'),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  return null;
+                },
+                  onSaved: (value) {
+                    dialogMetadata['shootDay'] = value!.toUpperCase();
+                  },
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Contestant'),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  return null;
+                },
+                  onSaved: (value) {
+                    dialogMetadata['contestant'] = value!.toUpperCase();
+                  },
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Camera'),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  return null;
+                },
+                  onSaved: (value) {
+                    dialogMetadata['camera'] = value!.toUpperCase();
+                  },
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Audio'),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  return null;
+                },
+                  onSaved: (value) {
+                    dialogMetadata['audio'] = value!.toUpperCase();
+                  },
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Timecode (TOD)'),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  if (!RegExp(r'^([01]\d|2[0-3])([0-5]\d){2}$').hasMatch(value)) {
+                  return 'Please enter a valid time in the format HHMMSS';
+                  }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    dialogMetadata['timecode'] = [
+                      value!.substring(0, 2),
+                      value.substring(2, 4),
+                      value.substring(4, 6),
+                    ];
+                  },
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Producer'),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  return null;
+                },
+                  onSaved: (value) {
+                    dialogMetadata['producer'] = value!.toUpperCase();
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text('Start Record'), style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.green[700],
+                  ),
+                  onPressed: () {
+                    if (formKey.currentState?.validate() ?? false) {
+                      formKey.currentState?.save();
+                      Navigator.of(context).pop(dialogMetadata);
+                    }
+                  },
+                ),
+              ]
+            )
+          ],
+        ),
+      );
+    },
+  );
+
+    if (metadata != null) {
+      try {
+        await recordingService.startRecording(metadata!);
+        sharedState.setRecording(true);
+      } catch (e) {
+        print(e);
+      }
     }
   }
 
@@ -49,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       sharedState.setRecording(false);
       setState(() {});
-      await recordingService.stopRecording();
+      await recordingService.stopRecording(metadata!);
     } catch (e) {
       print(e);
       if(e is FormatException) {

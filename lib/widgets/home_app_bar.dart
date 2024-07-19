@@ -18,10 +18,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           onSelected: (value) {
             var controller = Get.find<RecordingsController>();
             switch (value) {
-              case 'A-Z':
+              case 'A-Z/1-9':
                 controller.recordings.sort((a, b) => a.name.value.compareTo(b.name.value));
                 break;
-              case 'Z-A':
+              case 'Z-A/9-1':
                 controller.recordings.sort((a, b) => b.name.value.compareTo(a.name.value));
                 break;
               case 'Newest-Oldest':
@@ -34,7 +34,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             controller.update();
           },
           itemBuilder: (BuildContext context) {
-            return ['A-Z', 'Z-A', 'Newest-Oldest', 'Oldest-Newest'].map((String choice) {
+            return ['A-Z/1-9', 'Z-A/9-1', 'Newest-Oldest', 'Oldest-Newest'].map((String choice) {
               return PopupMenuItem<String>(
                 value: choice,
                 child: Text(choice),

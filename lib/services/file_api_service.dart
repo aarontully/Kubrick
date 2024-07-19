@@ -119,7 +119,7 @@ class FileApiService {
   }
 
   // GET: /files/{file_id}/download
-  Future<Uint8List> downloadFile(String fileId) async {
+  Future<String> downloadFile(String fileId) async {
     final url = Uri.parse('$baseUrl/files/$fileId/download');
     final response = await http.get(
       url,
@@ -130,7 +130,8 @@ class FileApiService {
     );
 
     if(response.statusCode == 200) {
-      return response.bodyBytes;
+      String transcript = String.fromCharCodes(response.bodyBytes);
+      return transcript;
     } else {
       throw Exception('Failed to download file');
     }
