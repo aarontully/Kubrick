@@ -13,7 +13,7 @@ class FilePickerUtil {
   static final RecordingService recordingService = RecordingService();
 
   static Future<void> pickAndSaveFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any, allowedExtensions: ['mp3', 'm4a', 'mp4', 'wav', 'aac', 'flac', 'pcm', 'ogg', 'opus', 'webm']);
     if(result != null) {
       File file = File(result.files.single.path!);
       Directory dir = await getApplicationDocumentsDirectory();

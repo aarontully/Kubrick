@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -36,7 +37,7 @@ class DatabaseHelper {
     final db = await initDatabase();
 
     final transcriptionJson = jsonEncode(recording.transcription);
-    final metadataJson = jsonEncode(recording.metadata);
+    final metadataJson = jsonEncode(recording.metadata.value.toMap());
 
     await db.insert(
       tableRecordings,
@@ -55,7 +56,8 @@ class DatabaseHelper {
 
     return List.generate(maps.length, (index) {
       final transcription = jsonDecode(maps[index]['transcription']);
-      final metadata = jsonDecode(maps[index]['metadata']);
+      final metadataMap = jsonDecode(maps[index]['metadata']);
+      final metadata = Metadata.fromMap(metadataMap);
 
       return Recording(
         path: maps[index][columnPath],
@@ -74,7 +76,7 @@ class DatabaseHelper {
     final db = await initDatabase();
 
     final transcriptionJson = jsonEncode(recording.transcription);
-    final metadataJson = jsonEncode(recording.metadata);
+    final metadataJson = jsonEncode(recording.metadata.value.toMap());
 
     await db.update(
       tableRecordings,
@@ -97,16 +99,4 @@ class DatabaseHelper {
 
     await db.close();
   }
-
-  /* static Future<void> saveUpload(Upload upload) async {
-    final db = await initDatabase();
-
-    await db.insert(
-      tableUploads,
-      upload.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-
-    await db.close();
-  } */
 }

@@ -1,0 +1,39 @@
+class Metadata {
+  String shoot_day;
+  String producer;
+  DateTime timecode;
+  String contestant;
+  String camera;
+  String audio;
+
+  Metadata({
+    this.shoot_day = '',
+    this.producer = '',
+    DateTime? timecode,
+    this.contestant = '',
+    this.camera = '',
+    this.audio = '',
+  }) : this.timecode = timecode ?? DateTime.now();
+
+  Map<String, dynamic> toMap() {
+    return {
+      'shoot_day': shoot_day,
+      'producer': producer,
+      'timecode': timecode.toIso8601String(),
+      'contestant': contestant,
+      'camera': camera,
+      'audio': audio,
+    };
+  }
+
+  static Metadata fromMap(Map<String, dynamic> map) {
+    return Metadata(
+      shoot_day: map['shoot_day'],
+      producer: map['producer'],
+      timecode: DateTime.parse(map['timecode']),
+      contestant: map['contestant'],
+      camera: map['camera'],
+      audio: map['audio'],
+    );
+  }
+}

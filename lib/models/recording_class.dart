@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:kubrick/models/metadata_class.dart';
 
 class Recording extends GetxController {
   String? uploadId;
@@ -8,15 +9,15 @@ class Recording extends GetxController {
   Rx<DateTime> createdAt = DateTime.now().obs;
   RxString name = ''.obs;
   RxString status = ''.obs;
-  Map<String, dynamic> metadata = {};
+  Rx<Metadata> metadata = Metadata().obs;
 
   Recording({required String path, required DateTime createdAt, required String name,
-  String status = 'Not Uploaded', this.uploadId, this.transcriptionId, this.transcription, Map<String, dynamic>? metadata}) {
+  String status = 'Not Uploaded', this.uploadId, this.transcriptionId, this.transcription, Metadata? metadata}) {
     this.path.value = path;
     this.createdAt.value = createdAt;
     this.name.value = name;
     this.status.value = status;
-    this.metadata = metadata ?? this.metadata;
+    this.metadata.value = metadata ?? this.metadata.value;
   }
 
   Map<String, dynamic> toMap() {
@@ -28,7 +29,7 @@ class Recording extends GetxController {
       'status': status.value,
       'transcriptionId': transcriptionId ,
       'transcription':  transcription,
-      'metadata': metadata,
+      'metadata': metadata.value.toMap(),
     };
   }
 
@@ -41,7 +42,7 @@ class Recording extends GetxController {
       uploadId: map['uploadId'],
       transcriptionId: map['transcriptionId'],
       transcription: map['transcription'],
-      metadata: map['metadata'] != null ? map['metadata'] as Map<String, dynamic> : {},
+      metadata: Metadata.fromMap(map['metadata'] as Map<String, dynamic>),
     );
   }
 }

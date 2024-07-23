@@ -11,7 +11,7 @@ void main() {
 
   Get.put(SharedState());
   Get.put(RecordingsController());
-  runApp(MaterialApp(home: HomeScreen()));
+  runApp(const MaterialApp(home: HomeScreen()));
 }
 
 //This cant stay in production, it will make the app vulnerable to attacks

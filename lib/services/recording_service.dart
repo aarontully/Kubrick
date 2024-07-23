@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
+import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
@@ -22,10 +24,13 @@ class RecordingService {
   final TranscriptionApiService transcriptionService = TranscriptionApiService();
   final sharedState = Get.find<SharedState>();
 
-  Future<String> startRecording(Map<String, dynamic> metadata) async {
+  Future<String> startRecording(Metadata metadata) async {
     if (await record.hasPermission()) {
+      String hours = metadata.timecode.hour.toString().padLeft(2, '0');
+      String minutes = metadata.timecode.minute.toString().padLeft(2, '0');
+      String seconds = metadata.timecode.second.toString().padLeft(2, '0');
       Directory directory = await getApplicationDocumentsDirectory();
-      String path = '${directory.path}/${metadata['shoot_day']}_${metadata['contestant']}_${metadata['camera']}_${metadata['audio']}_${metadata['timecode'][0]}_${metadata['timecode'][1]}_${metadata['timecode'][2]}_${metadata['producer']}.m4a';
+      String path = '${directory.path}/${metadata.shoot_day}_${metadata.contestant}_${metadata.audio}_${hours}_${minutes}_${seconds}_${metadata.producer}.m4a';
       await record.start(const RecordConfig(), path: path);
       print(path);
       return path;
@@ -33,7 +38,7 @@ class RecordingService {
     throw Exception('Could not start recording');
   }
 
-  Future<Recording?> stopRecording(Map<String, dynamic> metadata) async {
+  Future<Recording?> stopRecording(Metadata metadata) async {
     String? path = await record.stop();
 
     if (path != null) {
@@ -44,6 +49,7 @@ class RecordingService {
         path: path,
         createdAt: now,
         name: fileName,
+        metadata: metadata,
       );
 
       await DatabaseHelper.insertRecording(recording);

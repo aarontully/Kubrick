@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
+import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/recording_service.dart';
@@ -23,11 +23,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
   var sharedState = Get.find<SharedState>();
-  Map<String, dynamic>? metadata;
+  Metadata? metadata;
 
   @override
   void initState() {
     super.initState();
+    sharedState.checkConnectivity();
     PermissionChecker.requestPermissions().then((_) {
       Get.find<RecordingsController>().fetchRecordings();
     });
@@ -39,10 +40,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future startRecording() async {
-    metadata = await showDialog<Map<String, dynamic>>(
+    metadata = await showDialog<Metadata>(
     context: context,
     builder: (BuildContext context) {
-      var dialogMetadata = <String, dynamic>{};
+      var dialogMetadata = Metadata();
       var formKey = GlobalKey<FormState>();
 
       return Theme(
@@ -72,15 +73,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   TextFormField(
+                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'Shoot Day'),
                     validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a value';
                     }
+                    if(int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
                     return null;
                   },
                     onSaved: (value) {
-                      dialogMetadata['shoot_day'] = value!.toUpperCase();
+                      dialogMetadata.shoot_day = value!.toUpperCase();
                     },
                   ),
                   TextFormField(
@@ -92,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return null;
                   },
                     onSaved: (value) {
-                      dialogMetadata['contestant'] = value!.toUpperCase();
+                      dialogMetadata.contestant = value!.toUpperCase();
                     },
                   ),
                   TextFormField(
@@ -104,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return null;
                   },
                     onSaved: (value) {
-                      dialogMetadata['camera'] = value!.toUpperCase();
+                      dialogMetadata.camera = value!.toUpperCase();
                     },
                   ),
                   TextFormField(
@@ -116,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return null;
                   },
                     onSaved: (value) {
-                      dialogMetadata['audio'] = value!.toUpperCase();
+                      dialogMetadata.audio = value!.toUpperCase();
                     },
                   ),
                   TextFormField(
@@ -128,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return null;
                   },
                     onSaved: (value) {
-                      dialogMetadata['producer'] = value!.toUpperCase();
+                      dialogMetadata.producer = value!.toUpperCase();
                     },
                   ),
                 ],
@@ -147,16 +152,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextButton(
                     onPressed: () {
                       var now = DateTime.now();
-                      var formatter = DateFormat('HHmmss');
-                      String currentTime = formatter.format(now);
 
-                      dialogMetadata['timecode'] = [
-                        currentTime.substring(0, 2),
-                        currentTime.substring(2, 4),
-                        currentTime.substring(4, 6),
-                      ];
                       if (formKey.currentState?.validate() ?? false) {
                         formKey.currentState?.save();
+                        dialogMetadata.timecode = now;
                         Navigator.of(context).pop(dialogMetadata);
                       }
                     },

@@ -75,10 +75,13 @@ class TranscriptionApiService {
         if(!completer.isCompleted) {
           completer.complete(responseBody);
         }
-      } else if(transcriptionStatus == 'error') {
-        timer.cancel();
-        print('Transcription failed error');
       } else {
+        if (responseBody['data']['transcription']['status'] == 'error') {
+          timer.cancel();
+          if(!completer.isCompleted) {
+            completer.completeError(responseBody['data']['transcription']['error']);
+          }
+        }
         print('Transcription not completed...retrying in 15 seconds');
       }
     });
