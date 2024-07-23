@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
-import 'package:get/get_rx/get_rx.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SharedState extends GetxController {
   RxBool isLoading = false.obs;
   RxBool isRecording = false.obs;
   RxString currentPath = ''.obs;
   RxBool isProcessing = false.obs;
-  //Rx<Recording?> currentRecording = Rx<Recording?>(null);
+  RxBool isConnected = false.obs;
 
   void setLoading(bool value) {
     isLoading.value = value;
@@ -24,7 +24,14 @@ class SharedState extends GetxController {
     isRecording.value = value;
   }
 
-  /* void setCurrentRecording(Recording? recording){
-    currentRecording.value = recording;
-  } */
+  Future<bool> checkConnectivity() async {
+    final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult.contains(ConnectivityResult.mobile) || connectivityResult.contains(ConnectivityResult.wifi)) {
+      isConnected.value = true;
+      return true;
+    } else {
+      isConnected.value = false;
+      return false;
+    }
+  }
 }
