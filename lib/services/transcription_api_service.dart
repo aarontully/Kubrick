@@ -50,7 +50,7 @@ class TranscriptionApiService {
     final url = Uri.parse('$baseUrl/files/$uploadId/transcriptions/$transcriptionId');
     final completer = Completer<Map<String, dynamic>>();
 
-    Timer.periodic(Duration(seconds: 15), (timer) async {
+    Timer.periodic(const Duration(seconds: 15), (timer) async {
       final response = await http.get(
         url,
         headers: <String, String> {
@@ -75,6 +75,9 @@ class TranscriptionApiService {
         if(!completer.isCompleted) {
           completer.complete(responseBody);
         }
+      } else if(transcriptionStatus == 'error') {
+        timer.cancel();
+        print('Transcription failed error');
       } else {
         print('Transcription not completed...retrying in 15 seconds');
       }

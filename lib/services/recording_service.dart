@@ -25,7 +25,7 @@ class RecordingService {
   Future<String> startRecording(Map<String, dynamic> metadata) async {
     if (await record.hasPermission()) {
       Directory directory = await getApplicationDocumentsDirectory();
-      String path = '${directory.path}/${metadata['shootDay']}_${metadata['contestant']}_${metadata['camera']}_${metadata['audio']}_${metadata['timecode'][0]}_${metadata['timecode'][1]}_${metadata['timecode'][2]}_${metadata['producer']}.m4a';
+      String path = '${directory.path}/${metadata['shoot_day']}_${metadata['contestant']}_${metadata['camera']}_${metadata['audio']}_${metadata['timecode'][0]}_${metadata['timecode'][1]}_${metadata['timecode'][2]}_${metadata['producer']}.m4a';
       await record.start(const RecordConfig(), path: path);
       print(path);
       return path;

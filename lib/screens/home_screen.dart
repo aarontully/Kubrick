@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
@@ -43,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     builder: (BuildContext context) {
       var dialogMetadata = <String, dynamic>{};
       var formKey = GlobalKey<FormState>();
+
       return Theme(
         data: ThemeData(
           useMaterial3: true,
@@ -61,121 +63,114 @@ class _HomeScreenState extends State<HomeScreen> {
             displaySmall: GoogleFonts.pacifico(),
           ),
         ),
-        child: AlertDialog(
-          title: const Text('Enter Recording Details'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Shoot Day'),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  return null;
-                },
-                  onSaved: (value) {
-                    dialogMetadata['shootDay'] = value!.toUpperCase();
-                  },
-                ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Contestant'),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  return null;
-                },
-                  onSaved: (value) {
-                    dialogMetadata['contestant'] = value!.toUpperCase();
-                  },
-                ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Camera'),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  return null;
-                },
-                  onSaved: (value) {
-                    dialogMetadata['camera'] = value!.toUpperCase();
-                  },
-                ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Audio'),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  return null;
-                },
-                  onSaved: (value) {
-                    dialogMetadata['audio'] = value!.toUpperCase();
-                  },
-                ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Timecode (TOD)'),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  if (!RegExp(r'^([01]\d|2[0-3])([0-5]\d){2}$').hasMatch(value)) {
-                  return 'Please enter a valid time in the format HHMMSS';
-                  }
+        child: SingleChildScrollView(
+          child: AlertDialog(
+            title: const Text('Enter Recording Details'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: 'Shoot Day'),
+                    validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a value';
+                    }
                     return null;
                   },
-                  onSaved: (value) {
-                    dialogMetadata['timecode'] = [
-                      value!.substring(0, 2),
-                      value.substring(2, 4),
-                      value.substring(4, 6),
-                    ];
-                  },
-                ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Producer'),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  return null;
-                },
-                  onSaved: (value) {
-                    dialogMetadata['producer'] = value!.toUpperCase();
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                TextButton(
-                  child: Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text('Start Record'), style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.green[700],
+                    onSaved: (value) {
+                      dialogMetadata['shoot_day'] = value!.toUpperCase();
+                    },
                   ),
-                  onPressed: () {
-                    if (formKey.currentState?.validate() ?? false) {
-                      formKey.currentState?.save();
-                      Navigator.of(context).pop(dialogMetadata);
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: 'Contestant'),
+                    validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a value';
                     }
+                    return null;
                   },
-                ),
-              ]
-            )
-          ],
-        ),
+                    onSaved: (value) {
+                      dialogMetadata['contestant'] = value!.toUpperCase();
+                    },
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: 'Camera'),
+                    validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a value';
+                    }
+                    return null;
+                  },
+                    onSaved: (value) {
+                      dialogMetadata['camera'] = value!.toUpperCase();
+                    },
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: 'Audio'),
+                    validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a value';
+                    }
+                    return null;
+                  },
+                    onSaved: (value) {
+                      dialogMetadata['audio'] = value!.toUpperCase();
+                    },
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: 'Producer'),
+                    validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a value';
+                    }
+                    return null;
+                  },
+                    onSaved: (value) {
+                      dialogMetadata['producer'] = value!.toUpperCase();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      var now = DateTime.now();
+                      var formatter = DateFormat('HHmmss');
+                      String currentTime = formatter.format(now);
+
+                      dialogMetadata['timecode'] = [
+                        currentTime.substring(0, 2),
+                        currentTime.substring(2, 4),
+                        currentTime.substring(4, 6),
+                      ];
+                      if (formKey.currentState?.validate() ?? false) {
+                        formKey.currentState?.save();
+                        Navigator.of(context).pop(dialogMetadata);
+                      }
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.green[700],
+                    ),
+                    child: const Text('Start Record'),
+                  ),
+                ]
+              )
+            ],
+          ),
+        )
       );
     },
   );
@@ -246,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Center(
                 child: Container(
-                  margin: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.all(40),
                   child: Column(
                     children: <Widget>[
                       if (sharedState.isRecording.value == true)

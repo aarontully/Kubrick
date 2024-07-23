@@ -44,9 +44,9 @@ PODS:
   - record_darwin (1.0.0):
     - Flutter
     - FlutterMacOS
-  - SDWebImage (5.19.2):
-    - SDWebImage/Core (= 5.19.2)
-  - SDWebImage/Core (5.19.2)
+  - SDWebImage (5.19.4):
+    - SDWebImage/Core (= 5.19.4)
+  - SDWebImage/Core (5.19.4)
   - sqflite (0.0.3):
     - Flutter
     - FlutterMacOS
@@ -92,8 +92,8 @@ SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
-  record_darwin: 1f6619f2abac4d1ca91d3eeab038c980d76f1517
-  SDWebImage: dfe95b2466a9823cf9f0c6d01217c06550d7b29a
+  record_darwin: df0a677188e5fed18472550298e675f19ddaffbe
+  SDWebImage: 066c47b573f408f18caa467d71deace7c0f8280d
   sqflite: 673a0e54cc04b7d6dba8d24fb8095b31c3a99eec
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
 

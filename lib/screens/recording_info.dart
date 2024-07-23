@@ -36,7 +36,7 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: sharedState.isLoading.value && widget.recording.path.value == sharedState.currentPath.value
-      ? Center(
+      ? const Center(
         child: SizedBox(
           width: 300,
           height: 300,
@@ -50,7 +50,7 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
         createdAt: formatDate(widget.recording.transcription?['data']['transcription']['completed_at'] ?? 'No date'),
         duration: formatDuration(widget.recording.transcription?['data']['transcription']['result']['metadata']['duration'] ?? 0.0),
         summary: widget.recording.transcription?['data']['transcription']['result']['results']['summary']['short'] ?? 'No summary',
-        transcription: widget.recording.transcription?['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['transcript'] ?? 'No transcription',
+        transcription: widget.recording.transcription?['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'] ?? [],
         recording: widget.recording,
       )
     );

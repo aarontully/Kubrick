@@ -2,13 +2,14 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/file_api_service.dart';
+import 'package:kubrick/widgets/conversation_tab.dart';
 import 'package:kubrick/widgets/player_widget.dart';
 
 class InfoTabController extends StatefulWidget {
   final String createdAt;
   final String duration;
   final String summary;
-  final String transcription;
+  final List<dynamic> transcription;
   final Recording recording;
 
   InfoTabController({required this.createdAt, required this.duration, required this.summary, required this.transcription, required this.recording});
@@ -88,12 +89,12 @@ class _InfoTabControllerState extends State<InfoTabController> {
                 ),
               ],
             ),
-            Column(
+            SingleChildScrollView(
+              child: Column(
               children: <Widget>[
-                ListTile(
-                  title: Text(widget.transcription),
-                )
+                ConversationTab(transcription: widget.transcription)
               ],
+            ),
             ),
             Center(
               child: Column(
