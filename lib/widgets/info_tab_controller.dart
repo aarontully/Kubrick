@@ -1,5 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/file_api_service.dart';
@@ -62,60 +64,66 @@ class _InfoTabControllerState extends State<InfoTabController> {
           ),
           title: const Text('Recording Info'),
           actions: [
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.menu),
-              itemBuilder: (context) {
-                List<PopupMenuEntry<String>> menuItems = <PopupMenuEntry<String>> [
-                  const PopupMenuItem(
-                    value: 'download',
-                    child: Text('Download'),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text('Delete'),
-                  )
-                ];
+            Builder(
+              builder: (context) => PopupMenuButton<String>(
+                icon: const Icon(Icons.menu),
+                itemBuilder: (context) {
+                  List<PopupMenuEntry<String>> menuItems = <PopupMenuEntry<String>> [
+                    const PopupMenuItem(
+                      value: 'download',
+                      child: Text('Download'),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Delete'),
+                    )
+                  ];
 
-                if(widget.recording.status.value != 'Uploaded') {
-                  menuItems.insert(1, const PopupMenuItem(
-                    value: 'reprocess',
-                    child: Text('Re-Process'),
-                  ));
-                  menuItems.removeAt(1);
-                }
+                  if(widget.recording.status.value != 'Uploaded') {
+                    menuItems.insert(1, const PopupMenuItem(
+                      value: 'reprocess',
+                      child: Text('Re-Process'),
+                    ));
+                  }
 
-                return menuItems;
-              },
-              onSelected: (value) async {
-                if (value == 'download') {
-                  fileApiService.downloadFile(widget.recording.uploadId!);
-                }
-                if (value == 'reprocess') {
-                  try {
-                    RecordingService recordingService = RecordingService();
-                    final response = await recordingService.transcribeRecording(widget.recording);
-                    if(response) {
-                      widget.recording.status.value = 'Uploaded';
-                      await DatabaseHelper.updateRecording(widget.recording);
+                  return menuItems;
+                },
+                onSelected: (value) async {
+                  if (value == 'download') {
+                    fileApiService.downloadFile(widget.recording.uploadId!);
+                  }
+                  if (value == 'reprocess') {
+                    try {
+                      RecordingService recordingService = RecordingService();
+                      final response = await recordingService.transcribeRecording(widget.recording);
+                      if(response) {
+                        widget.recording.status.value = 'Uploaded';
+                        await DatabaseHelper.updateRecording(widget.recording);
+                      }
+                    } catch (e) {
+                      print('Failed to reprocess recording: $e');
                     }
-                  } catch (e) {
-                    print('Failed to reprocess recording: $e');
                   }
-                }
-                if (value == 'delete') {
-                  try {
-                    DatabaseHelper.deleteRecording(widget.recording);
-                  } catch (e) {
-                    print('Failed to delete local recording: $e');
+                  if (value == 'delete') {
+                    try {
+                      DatabaseHelper.deleteRecording(widget.recording);
+                    } catch (e) {
+                      print('Failed to delete local recording: $e');
+                    }
+                    try {
+                      fileApiService.deleteFile(widget.recording.uploadId!);
+                    } catch (e) {
+                      print('Failed to delete remote recording: $e');
+                    }
+
+                    // TODO: this isnt working correctly, after popping the navigation the list does not update
+                    // and you can till interact with the old object
+                    await Get.find<RecordingsController>().fetchRecordings();
+                    Navigator.pop(context);
                   }
-                  try {
-                    fileApiService.deleteFile(widget.recording.uploadId!);
-                  } catch (e) {
-                    print('Failed to delete remote recording: $e');
-                  }
-                }
-              },
+                },
+              ),
             )
           ],
         ),
