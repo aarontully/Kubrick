@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:kubrick/models/recording_class.dart';
 
 class FileApiService {
   final String baseUrl = 'https://transcription.staging.endemolshine.com.au/api/v1';
@@ -24,7 +25,7 @@ class FileApiService {
   // TODO: get files from the server and add files that arent already on the local device as an option to download
 
   // POST: /files/upload
-  Future<String> initUpload(int chunks, String name, int size) async {
+  Future<String> initUpload(int chunks, String name, int size, Recording recording) async {
     final url = Uri.parse('$baseUrl/files/upload');
     final response = await http.post(
       url,
@@ -36,6 +37,7 @@ class FileApiService {
         'chunks': chunks,
         'name': name,
         'size': size,
+        'metadata': recording.metadata.value.toMap(),
       }),
     );
 

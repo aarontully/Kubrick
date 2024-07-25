@@ -21,7 +21,8 @@ class RecordingService {
   final Uuid uuid = const Uuid();
   final DatabaseHelper databaseHelper = DatabaseHelper();
   final FileApiService apiService = FileApiService();
-  final TranscriptionApiService transcriptionService = TranscriptionApiService();
+  final TranscriptionApiService transcriptionService =
+      TranscriptionApiService();
   final sharedState = Get.find<SharedState>();
 
   Future<String> startRecording(Metadata metadata) async {
@@ -30,7 +31,8 @@ class RecordingService {
       String minutes = metadata.timecode.minute.toString().padLeft(2, '0');
       String seconds = metadata.timecode.second.toString().padLeft(2, '0');
       Directory directory = await getApplicationDocumentsDirectory();
-      String path = '${directory.path}/${metadata.shoot_day}_${metadata.contestant}_${metadata.audio}_${hours}_${minutes}_${seconds}_${metadata.producer}.m4a';
+      String path =
+          '${directory.path}/${metadata.shoot_day}_${metadata.contestant}_${metadata.audio}_${hours}_${minutes}_${seconds}_${metadata.producer}.m4a';
       await record.start(const RecordConfig(), path: path);
       print(path);
       return path;
@@ -39,6 +41,7 @@ class RecordingService {
   }
 
   Future<Recording?> stopRecording(Metadata metadata) async {
+    sharedState.setProcessing(true);
     String? path = await record.stop();
 
     if (path != null) {
@@ -52,17 +55,22 @@ class RecordingService {
         metadata: metadata,
       );
 
+      sharedState.setUploadProgress(0.5);
       await DatabaseHelper.insertRecording(recording);
 
       Get.find<RecordingsController>().recordings.add(recording);
       Get.find<RecordingsController>().fetchRecordings();
 
       final response = await transcribeRecording(recording);
-      if(response) {
+      if (response) {
         recording.status.value = 'Uploaded';
-        await DatabaseHelper.updateRecording(recording);
+      } else {
+        recording.status.value = 'Local';
       }
+      recording.status.refresh();
+      await DatabaseHelper.updateRecording(recording);
 
+      sharedState.setProcessing(false);
       return recording;
     }
     return null;
@@ -75,7 +83,8 @@ class RecordingService {
     final chunkCount = (fileSize / chunkSize).ceil();
     final fileName = p.basename(recording.path.value);
 
-    final uploadId = await apiService.initUpload(chunkCount, fileName, fileSize);
+    final uploadId =
+        await apiService.initUpload(chunkCount, fileName, fileSize, recording);
     print('recording service ' + uploadId);
     recording.uploadId = uploadId;
     await DatabaseHelper.updateRecording(recording);
@@ -94,16 +103,17 @@ class RecordingService {
 
       await apiService.completeUpload(uploadId);
 
-      final transcriptionId = await transcriptionService.postTranscription(uploadId);
+      final transcriptionId =
+          await transcriptionService.postTranscription(uploadId);
       recording.transcriptionId = transcriptionId;
       await DatabaseHelper.updateRecording(recording);
 
-      final transcriptionResponse = await transcriptionService.pollTranscription(uploadId, transcriptionId);
+      final transcriptionResponse = await transcriptionService
+          .pollTranscription(uploadId, transcriptionId);
       recording.transcription = transcriptionResponse;
       await DatabaseHelper.updateRecording(recording);
 
       return true;
-
     } catch (e) {
       throw Exception(e);
     }

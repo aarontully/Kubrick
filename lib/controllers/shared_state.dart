@@ -7,6 +7,7 @@ class SharedState extends GetxController {
   RxString currentPath = ''.obs;
   RxBool isProcessing = false.obs;
   RxBool isConnected = false.obs;
+  RxDouble uploadProgress = 0.0.obs;
 
   void setLoading(bool value) {
     isLoading.value = value;
@@ -18,6 +19,10 @@ class SharedState extends GetxController {
 
   void setProcessing(bool value) {
     isProcessing.value = value;
+  }
+
+  void setUploadProgress(double value) {
+    uploadProgress.value = value;
   }
 
   void setRecording(bool value) {

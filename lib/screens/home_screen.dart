@@ -24,6 +24,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
   var sharedState = Get.find<SharedState>();
   Metadata? metadata;
+  List<String> contestants = ['AJ', 'Matthew', 'Kaelan', 'Myles', 'Max', 'Kent', 'Zara', 'Logan', 'Ally', 'Indy', 'Karin',
+  'Laura', 'Paul', 'Richard', 'Ben', 'Zen', 'Paul', 'Nashwan', 'Ursula', 'Candice', 'Laura', 'Morgan', 'Kate', 'Kristen', 'Jesse', 'Nubia', 'Eden'];
+  List<String> producers = ['BEN HEWETT', 'MARIA HANDAS', 'EMMA VICKERY', 'MOUNYA WISE', 'DANE MOLTZEN', 'ANDREA REHRIG', 'JASMINE VANDENBERG',
+  'ALEX GILLESPIE', 'SCOTT HERRMAN', 'ALEISHA MCCORMACK', 'CHARLOTTE FREEMAN HALL', 'JACOB REID', 'DOMINIC OBRIEN', 'ALEXANDRA CASACLANG',
+  'HAYDEN WHEELER', 'JACOB LUNNEY', 'BEAUMONT CHIVERS', 'TOM BACKWELL', 'LAUREN ANDERSON'];
 
   @override
   void initState() {
@@ -73,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   TextFormField(
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(labelText: 'Shoot Day'),
                     validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -89,16 +94,43 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'Contestant'),
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(labelText: 'Interview Day'),
                     validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a value';
                     }
+                    if(int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
                     return null;
                   },
                     onSaved: (value) {
+                      dialogMetadata.interview_day = value!.toUpperCase();
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    value: contestants[0],
+                    decoration: const InputDecoration(labelText: 'Contestant'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a value';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
                       dialogMetadata.contestant = value!.toUpperCase();
                     },
+                    onChanged: (value) {
+                      dialogMetadata.contestant = value as String;
+                    },
+                    isExpanded: true,
+                    items: contestants.map((String sdValue) {
+                      return DropdownMenuItem<String>(
+                        value: sdValue,
+                        child: Text(sdValue),
+                      );
+                    }).toList(),
                   ),
                   TextFormField(
                     decoration: const InputDecoration(labelText: 'Camera'),
@@ -124,19 +156,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       dialogMetadata.audio = value!.toUpperCase();
                     },
                   ),
-                  TextFormField(
+                  DropdownButtonFormField<String>(
+                    value: producers[0],
                     decoration: const InputDecoration(labelText: 'Producer'),
                     validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a value';
-                    }
-                    return null;
-                  },
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a value';
+                      }
+                      return null;
+                    },
                     onSaved: (value) {
                       dialogMetadata.producer = value!.toUpperCase();
                     },
+                    onChanged: (value) {
+                      dialogMetadata.producer = value as String;
+                    },
+                    isExpanded: true,
+                    items: producers.map((String prodValue) {
+                      return DropdownMenuItem<String>(
+                        value: prodValue,
+                        child: Text(prodValue),
+                      );
+                    }).toList(
                   ),
-                ],
+                )],
               ),
             ),
             actions: <Widget>[
