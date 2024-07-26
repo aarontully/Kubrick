@@ -25,6 +25,15 @@ class RecordingService {
       TranscriptionApiService();
   final sharedState = Get.find<SharedState>();
 
+  Future<bool> hasNetwork() async {
+  try {
+    final result = await InternetAddress.lookup('example.com');
+    return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+  } on SocketException catch (_) {
+    return false;
+  }
+}
+
   Future<String> startRecording(Metadata metadata) async {
     if (await record.hasPermission()) {
       String hours = metadata.timecode.hour.toString().padLeft(2, '0');
@@ -42,6 +51,7 @@ class RecordingService {
 
   Future<Recording?> stopRecording(Metadata metadata) async {
     sharedState.setProcessing(true);
+    sharedState.setUploadProgress(0.1);
     String? path = await record.stop();
 
     if (path != null) {
@@ -55,21 +65,33 @@ class RecordingService {
         metadata: metadata,
       );
 
-      sharedState.setUploadProgress(0.5);
+      sharedState.setUploadProgress(0.3);
+
       await DatabaseHelper.insertRecording(recording);
 
       Get.find<RecordingsController>().recordings.add(recording);
       Get.find<RecordingsController>().fetchRecordings();
 
-      final response = await transcribeRecording(recording);
-      if (response) {
-        recording.status.value = 'Uploaded';
+      sharedState.setUploadProgress(0.4);
+
+      // janky way of dealing with this, try implement connectivity_plus
+      final isOnline = await hasNetwork();
+
+      if (isOnline) {
+        final response = await transcribeRecording(recording);
+        if (response) {
+          recording.status.value = 'Uploaded';
+        } else {
+          recording.status.value = 'Local';
+        }
       } else {
         recording.status.value = 'Local';
       }
+
       recording.status.refresh();
       await DatabaseHelper.updateRecording(recording);
 
+      sharedState.setUploadProgress(0.10);
       sharedState.setProcessing(false);
       return recording;
     }
@@ -82,6 +104,8 @@ class RecordingService {
     const chunkSize = 1024 * 1024; //1MB
     final chunkCount = (fileSize / chunkSize).ceil();
     final fileName = p.basename(recording.path.value);
+
+    sharedState.setUploadProgress(0.6);
 
     final uploadId =
         await apiService.initUpload(chunkCount, fileName, fileSize, recording);
@@ -102,20 +126,26 @@ class RecordingService {
       }
 
       await apiService.completeUpload(uploadId);
+      sharedState.setUploadProgress(0.7);
 
       final transcriptionId =
           await transcriptionService.postTranscription(uploadId);
       recording.transcriptionId = transcriptionId;
       await DatabaseHelper.updateRecording(recording);
 
+      sharedState.setUploadProgress(0.8);
+
       final transcriptionResponse = await transcriptionService
           .pollTranscription(uploadId, transcriptionId);
       recording.transcription = transcriptionResponse;
       await DatabaseHelper.updateRecording(recording);
 
+      sharedState.setUploadProgress(0.9);
+
       return true;
     } catch (e) {
-      throw Exception(e);
+      print('Failed to transcribe recording: $e');
+      return false;
     }
   }
 }

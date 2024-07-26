@@ -19,10 +19,12 @@ class SharedState extends GetxController {
 
   void setProcessing(bool value) {
     isProcessing.value = value;
+    update();
   }
 
   void setUploadProgress(double value) {
     uploadProgress.value = value;
+    update();
   }
 
   void setRecording(bool value) {
@@ -30,12 +32,17 @@ class SharedState extends GetxController {
   }
 
   Future<bool> checkConnectivity() async {
-    final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult.contains(ConnectivityResult.mobile) || connectivityResult.contains(ConnectivityResult.wifi)) {
-      isConnected.value = true;
-      return true;
-    } else {
-      isConnected.value = false;
+    try {
+      final List<ConnectivityResult> connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult.contains(ConnectivityResult.mobile) || connectivityResult.contains(ConnectivityResult.wifi)) {
+        isConnected.value = true;
+        return true;
+      } else {
+        isConnected.value = false;
+        return false;
+      }
+    } catch (e) {
+      print('Failed to check connectivity: $e');
       return false;
     }
   }

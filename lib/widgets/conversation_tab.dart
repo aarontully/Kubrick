@@ -9,31 +9,47 @@ class ConversationTab extends StatelessWidget {
   Widget build(BuildContext context) {
     String? currentSpeaker;
     return SingleChildScrollView(
-      child: Column(
-        children: transcription.expand<Widget>((paragraph) {
-          var speaker = paragraph['speaker'].toString();
-          var sentences = paragraph['sentences'];
-          List<Widget> widgets = [];
-          if(speaker != currentSpeaker) {
-            widgets.add(ListTile(
-              title: Text(
-                'Speaker $speaker',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold
-                ),
+      child: Stack(
+        children: [
+          SelectionArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Column(
+              children: transcription.expand<Widget>((paragraph) {
+                var speaker = paragraph['speaker'].toString();
+                var sentences = paragraph['sentences'];
+                List<Widget> widgets = [];
+
+                  if (currentSpeaker != speaker) {
+                    widgets.add(
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Text(
+                          'Speaker: $speaker',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    );
+                  }
+                  currentSpeaker = speaker;
+                  widgets.add(
+                    Text(
+                      sentences.map((sentence) => sentence['text']).join(' '),
+                    ),
+                  );
+                  return widgets;
+                }).toList(),
               ),
-            ));
-            currentSpeaker = speaker;
-          }
-          widgets.addAll(sentences.map<Widget>((sentence) {
-            var text = sentence['text'];
-            return ListTile(
-              subtitle: Text(text),
-            );
-          }).toList());
-          return widgets;
-        }).toList(),
-      ),
+            )
+          ),
+            /*child: const Positioned(
+            top: 12.0,
+            right: 12.0,
+            child: Icon(
+              Icons.copy,
+            ),*/
+        ],
+      )
     );
   }
 }

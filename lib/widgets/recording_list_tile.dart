@@ -23,7 +23,7 @@ class RecordingListTile extends StatelessWidget {
       trailing: Obx(() => SizedBox(
             width: 50,
             child: sharedState.isProcessing.value
-                ? const LinearProgressIndicator(value: 0.5)
+                ? LinearProgressIndicator(value: sharedState.uploadProgress.value)
                 : recording.status.value == 'Uploaded'
                     ? const Icon(Icons.cloud_done)
                     : const Icon(Icons.cloud_off),
