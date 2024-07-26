@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:kubrick/models/recording_class.dart';
 
 class SharedState extends GetxController {
   RxBool isLoading = false.obs;
@@ -8,6 +9,7 @@ class SharedState extends GetxController {
   RxBool isProcessing = false.obs;
   RxBool isConnected = false.obs;
   RxDouble uploadProgress = 0.0.obs;
+  Rx<Recording?> currentRecording = Rx<Recording?>(null);
 
   void setLoading(bool value) {
     isLoading.value = value;

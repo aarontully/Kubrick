@@ -22,7 +22,7 @@ class RecordingListTile extends StatelessWidget {
           Text(DateFormat('yyyy-MM-dd').format(recording.createdAt.value)),
       trailing: Obx(() => SizedBox(
             width: 50,
-            child: sharedState.isProcessing.value
+            child: sharedState.currentRecording.value?.uploadId == recording.uploadId
                 ? LinearProgressIndicator(value: sharedState.uploadProgress.value)
                 : recording.status.value == 'Uploaded'
                     ? const Icon(Icons.cloud_done)

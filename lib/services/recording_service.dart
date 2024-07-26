@@ -65,6 +65,7 @@ class RecordingService {
         metadata: metadata,
       );
 
+      sharedState.currentRecording.value = recording;
       sharedState.setUploadProgress(0.3);
 
       await DatabaseHelper.insertRecording(recording);
@@ -93,6 +94,7 @@ class RecordingService {
 
       sharedState.setUploadProgress(0.10);
       sharedState.setProcessing(false);
+      sharedState.currentRecording.value = null;
       return recording;
     }
     return null;

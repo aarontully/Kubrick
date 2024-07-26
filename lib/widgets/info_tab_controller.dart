@@ -72,10 +72,10 @@ class _InfoTabControllerState extends State<InfoTabController> {
                   itemBuilder: (context) {
                     List<PopupMenuEntry<String>> menuItems =
                         <PopupMenuEntry<String>>[
-                      const PopupMenuItem(
+                      /* const PopupMenuItem(
                         value: 'download',
                         child: Text('Download'),
-                      ),
+                      ), */
                       const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: 'delete',
@@ -147,6 +147,16 @@ class _InfoTabControllerState extends State<InfoTabController> {
                 ListTile(
                   title: const Text('Duration'),
                   subtitle: SelectableText(widget.duration),
+                ),
+                ListTile(
+                  title: const Text('Status'),
+                  subtitle: SelectableText(
+                    widget.recording.status.value == 'Uploaded'
+                      ? 'Uploaded to the cloud successfully'
+                      : sharedState.isProcessing.value == true
+                        ? 'Processing...Please wait'
+                        : 'Local recording only',
+                  ),
                 ),
                 ListTile(
                   title: const Text('Summary'),
