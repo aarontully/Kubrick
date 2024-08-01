@@ -1,15 +1,21 @@
+import 'dart:io';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/recording_service.dart';
+import 'package:kubrick/services/transcription_api_service.dart';
 import 'package:kubrick/widgets/conversation_tab.dart';
 import 'package:kubrick/widgets/player_widget.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 
 class InfoTabController extends StatefulWidget {
   final String createdAt;
@@ -33,6 +39,8 @@ class InfoTabController extends StatefulWidget {
 class _InfoTabControllerState extends State<InfoTabController> {
   late AudioPlayer player = AudioPlayer();
   final FileApiService fileApiService = FileApiService();
+  final TranscriptionApiService transcriptionService =
+      TranscriptionApiService();
   SharedState sharedState = Get.find<SharedState>();
 
   @override
@@ -72,9 +80,13 @@ class _InfoTabControllerState extends State<InfoTabController> {
                   itemBuilder: (context) {
                     List<PopupMenuEntry<String>> menuItems =
                         <PopupMenuEntry<String>>[
+                      const PopupMenuItem(
+                        value: 'downloadTranscription',
+                        child: Text('Download Transcription'),
+                      ),
                       /* const PopupMenuItem(
-                        value: 'download',
-                        child: Text('Download'),
+                        value: 'downloadAudio',
+                        child: Text('Download audio'),
                       ), */
                       const PopupMenuDivider(),
                       const PopupMenuItem(
@@ -95,8 +107,19 @@ class _InfoTabControllerState extends State<InfoTabController> {
                     return menuItems;
                   },
                   onSelected: (value) async {
-                    if (value == 'download') {
+                    if (value == 'downloadAudio') {
                       fileApiService.downloadFile(widget.recording.uploadId!);
+                    }
+                    if (value == 'downloadTranscription') {
+                      final transcription = await
+                          transcriptionService.downloadTranscription(
+                              widget.recording.uploadId!,
+                              widget.recording.transcriptionId!);
+                      final dir = await getApplicationDocumentsDirectory();
+                      final date = DateTime.now();
+                      final formattedDate = DateFormat('yyyy-MM-dd').format(date);
+                      final file = File(join('${dir.path}/${widget.recording.transcriptionId}_$formattedDate.txt'));
+                      await file.writeAsString(transcription);
                     }
                     if (value == 'reprocess') {
                       try {
@@ -152,10 +175,10 @@ class _InfoTabControllerState extends State<InfoTabController> {
                   title: const Text('Status'),
                   subtitle: SelectableText(
                     widget.recording.status.value == 'Uploaded'
-                      ? 'Uploaded to the cloud successfully'
-                      : sharedState.isProcessing.value == true
-                        ? 'Processing...Please wait'
-                        : 'Local recording only',
+                        ? 'Uploaded to the cloud successfully'
+                        : sharedState.isProcessing.value == true
+                            ? 'Processing...Please wait'
+                            : 'Local recording only',
                   ),
                 ),
                 ListTile(
