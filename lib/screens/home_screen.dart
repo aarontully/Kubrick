@@ -1,3 +1,4 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +11,7 @@ import 'package:kubrick/services/recording_service.dart';
 import 'package:kubrick/utils/file_picker_util.dart';
 import 'package:kubrick/utils/permission_checker.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
+import 'package:kubrick/widgets/metadata_dialog.dart';
 import 'package:kubrick/widgets/recording_list.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 
@@ -24,11 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
   var sharedState = Get.find<SharedState>();
   Metadata? metadata;
-  List<String> contestants = ['AJ', 'Matthew', 'Kaelan', 'Myles', 'Max', 'Kent', 'Zara', 'Logan', 'Ally', 'Indy', 'Karin',
-  'Laura', 'Paul', 'Richard', 'Ben', 'Zen', 'Paul', 'Nashwan', 'Ursula', 'Candice', 'Laura', 'Morgan', 'Kate', 'Kristen', 'Jesse', 'Nubia', 'Eden'];
-  List<String> producers = ['BEN HEWETT', 'MARIA HANDAS', 'EMMA VICKERY', 'MOUNYA WISE', 'DANE MOLTZEN', 'ANDREA REHRIG', 'JASMINE VANDENBERG',
-  'ALEX GILLESPIE', 'SCOTT HERRMAN', 'ALEISHA MCCORMACK', 'CHARLOTTE FREEMAN HALL', 'JACOB REID', 'DOMINIC OBRIEN', 'ALEXANDRA CASACLANG',
-  'HAYDEN WHEELER', 'JACOB LUNNEY', 'BEAUMONT CHIVERS', 'TOM BACKWELL', 'LAUREN ANDERSON'];
 
   @override
   void initState() {
@@ -45,177 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future startRecording() async {
-    metadata = await showDialog<Metadata>(
-    context: context,
-    builder: (BuildContext context) {
-      var dialogMetadata = Metadata();
-      var formKey = GlobalKey<FormState>();
-
-      return Theme(
-        data: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.purple,
-            brightness: Brightness.dark,
-          ),
-          textTheme: TextTheme(
-            displayLarge:
-                const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
-            titleLarge: GoogleFonts.oswald(
-              fontSize: 30,
-              fontStyle: FontStyle.italic,
-            ),
-            bodyMedium: GoogleFonts.merriweather(),
-            displaySmall: GoogleFonts.pacifico(),
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: AlertDialog(
-            title: const Text('Enter Recording Details'),
-            content: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextFormField(
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'Shoot Day'),
-                    validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a value';
-                    }
-                    if(int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                    onSaved: (value) {
-                      dialogMetadata.shoot_day = value!.toUpperCase();
-                    },
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'Interview Day'),
-                    validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a value';
-                    }
-                    if(int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                    onSaved: (value) {
-                      dialogMetadata.interview_day = value!.toUpperCase();
-                    },
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: contestants[0],
-                    decoration: const InputDecoration(labelText: 'Contestant'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a value';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      dialogMetadata.contestant = value!.toUpperCase();
-                    },
-                    onChanged: (value) {
-                      dialogMetadata.contestant = value as String;
-                    },
-                    isExpanded: true,
-                    items: contestants.map((String sdValue) {
-                      return DropdownMenuItem<String>(
-                        value: sdValue,
-                        child: Text(sdValue),
-                      );
-                    }).toList(),
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Camera'),
-                    validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a value';
-                    }
-                    return null;
-                  },
-                    onSaved: (value) {
-                      dialogMetadata.camera = value!.toUpperCase();
-                    },
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Audio'),
-                    validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a value';
-                    }
-                    return null;
-                  },
-                    onSaved: (value) {
-                      dialogMetadata.audio = value!.toUpperCase();
-                    },
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: producers[0],
-                    decoration: const InputDecoration(labelText: 'Producer'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a value';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      dialogMetadata.producer = value!.toUpperCase();
-                    },
-                    onChanged: (value) {
-                      dialogMetadata.producer = value as String;
-                    },
-                    isExpanded: true,
-                    items: producers.map((String prodValue) {
-                      return DropdownMenuItem<String>(
-                        value: prodValue,
-                        child: Text(prodValue),
-                      );
-                    }).toList(
-                  ),
-                )],
-              ),
-            ),
-            actions: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  TextButton(
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      var now = DateTime.now();
-
-                      if (formKey.currentState?.validate() ?? false) {
-                        formKey.currentState?.save();
-                        dialogMetadata.timecode = now;
-                        Navigator.of(context).pop(dialogMetadata);
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.green[700],
-                    ),
-                    child: const Text('Start Record'),
-                  ),
-                ]
-              )
-            ],
-          ),
-        )
-      );
-    },
-  );
+    metadata = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return buildMetadataDialog(context);
+      },
+    );
 
     if (metadata != null) {
       try {
@@ -234,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await recordingService.stopRecording(metadata!);
     } catch (e) {
       print(e);
-      if(e is FormatException) {
+      if (e is FormatException) {
         print('Server connection failed, but the recording was saved locally.');
       }
     }
@@ -246,120 +78,152 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return GetBuilder<RecordingsController>(
       init: RecordingsController(),
-      builder: (recordingsController) => MaterialApp(
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.purple,
-            brightness: Brightness.dark,
-          ),
-          textTheme: TextTheme(
-            displayLarge:
-                const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
-            titleLarge: GoogleFonts.oswald(
-              fontSize: 30,
-              fontStyle: FontStyle.italic,
-            ),
-            bodyMedium: GoogleFonts.merriweather(),
-            displaySmall: GoogleFonts.pacifico(),
-          ),
-        ),
-        home: Scaffold(
-          appBar: const HomeAppBar(),
-          body: Column(
-            children: <Widget>[
-              Expanded(
-                child: RecordingList(
-                  recordings: recordingsController.recordings,
-                  onPlay: (Recording recording) {
-                    print(recording.transcription);
-                  },
-                  onDelete: (Recording recording) {
-                    DatabaseHelper.deleteRecording(recording);
-                    recordingsController.recordings.remove(recording);
-                    setState(() {});
-                  },
-                )
+      builder: (recordingsController) => Builder(
+        builder: (context) => Scaffold(
+          body: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.purple,
+                brightness: Brightness.dark,
               ),
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.all(40),
-                  child: Column(
-                    children: <Widget>[
-                      if (sharedState.isRecording.value == true)
-                        Container(
-                          height: 50,
-                          width: 150,
-                          margin: const EdgeInsets.only(bottom: 20),
-                          child: const LoadingIndicator(
-                            indicatorType: Indicator.lineScalePulseOutRapid,
-                            colors: [Color(0xFFE4E4E4)],
-                          ),
-                        )
-                      else
-                        const SizedBox.shrink(),
-                      Row(
+              textTheme: TextTheme(
+                displayLarge:
+                    const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
+                titleLarge: GoogleFonts.oswald(
+                  fontSize: 30,
+                  fontStyle: FontStyle.italic,
+                ),
+                bodyMedium: GoogleFonts.merriweather(),
+                displaySmall: GoogleFonts.pacifico(),
+              ),
+            ),
+            home: Scaffold(
+              appBar: const HomeAppBar(),
+              body: Column(
+                children: <Widget>[
+                  Expanded(
+                      child: RecordingList(
+                    recordings: recordingsController.recordings,
+                    onPlay: (Recording recording) {
+                      print(recording.transcription);
+                    },
+                    onDelete: (Recording recording) {
+                      DatabaseHelper.deleteRecording(recording);
+                      recordingsController.recordings.remove(recording);
+                      setState(() {});
+                    },
+                  )),
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.all(40),
+                      child: Column(
                         children: <Widget>[
-                          Expanded(
-                            flex: 1,
-                            child: Container(),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Center(
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  if (sharedState.isRecording.value == true) {
-                                    await stopRecording();
-                                  } else {
-                                    await startRecording();
-                                  }
-                                  setState(() {});
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(10),
-                                  backgroundColor: Colors.red[600],
-                                  iconColor: Colors.red[900],
-                                ),
-                                child: Icon(
-                                  sharedState.isRecording.value ? Icons.stop : Icons.mic_rounded,
-                                  size: 60,
+                          if (sharedState.isRecording.value == true)
+                            Container(
+                              height: 50,
+                              width: 150,
+                              margin: const EdgeInsets.only(bottom: 20),
+                              child: const LoadingIndicator(
+                                indicatorType: Indicator.lineScalePulseOutRapid,
+                                colors: [Color(0xFFE4E4E4)],
+                              ),
+                            )
+                          else
+                            const SizedBox.shrink(),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                flex: 1,
+                                child: Visibility(
+                                  visible: sharedState.isRecording.value,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        await recordingService.restartRecording(metadata!);
+                                        final snackbar = SnackBar(
+                                          elevation: 0,
+                                          behavior: SnackBarBehavior.floating,
+                                          backgroundColor: Colors.transparent,
+                                          content: AwesomeSnackbarContent(title: 'Restarted', message: 'The recording has now restarted', contentType: ContentType.success),
+                                        );
+                                        ScaffoldMessenger.of(context)
+                                          ..hideCurrentSnackBar()
+                                          ..showSnackBar(snackbar);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: const CircleBorder(),
+                                        padding: const EdgeInsets.all(10),
+                                        iconColor: const Color.fromARGB(255, 18, 116, 18),
+                                      ),
+                                      child: const Icon(
+                                        Icons.restart_alt_outlined,
+                                        size: 40,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  await FilePickerUtil.pickAndSaveFile();
-                                  recordingsController.fetchRecordings();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(10),
-                                  iconColor: Colors.grey[100],
+                              Expanded(
+                                flex: 1,
+                                child: Center(
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      if (sharedState.isRecording.value == true) {
+                                        await stopRecording();
+                                      } else {
+                                        await startRecording();
+                                      }
+                                      setState(() {});
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      shape: const CircleBorder(),
+                                      padding: const EdgeInsets.all(10),
+                                      backgroundColor: Colors.red[600],
+                                      iconColor: Colors.red[900],
+                                    ),
+                                    child: Icon(
+                                      sharedState.isRecording.value
+                                          ? Icons.stop
+                                          : Icons.mic_rounded,
+                                      size: 60,
+                                    ),
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.add,
-                                  size: 20,
-                                )
                               ),
-                            ),
-                          )
+                              Expanded(
+                                flex: 1,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: ElevatedButton(
+                                      onPressed: () async {
+                                        await FilePickerUtil.pickAndSaveFile(context);
+                                        recordingsController.fetchRecordings();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: const CircleBorder(),
+                                        padding: const EdgeInsets.all(10),
+                                        iconColor: Colors.grey[100],
+                                      ),
+                                      child: const Icon(
+                                        Icons.add,
+                                        size: 20,
+                                      )),
+                                ),
+                              )
+                            ],
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        )
+      )
     );
   }
 }

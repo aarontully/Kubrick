@@ -14,6 +14,7 @@ import 'package:kubrick/services/recording_service.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
 import 'package:kubrick/widgets/conversation_tab.dart';
 import 'package:kubrick/widgets/player_widget.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -111,15 +112,33 @@ class _InfoTabControllerState extends State<InfoTabController> {
                       fileApiService.downloadFile(widget.recording.uploadId!);
                     }
                     if (value == 'downloadTranscription') {
-                      final transcription = await
-                          transcriptionService.downloadTranscription(
+                      final transcription =
+                          await transcriptionService.downloadTranscription(
                               widget.recording.uploadId!,
                               widget.recording.transcriptionId!);
                       final dir = await getApplicationDocumentsDirectory();
                       final date = DateTime.now();
-                      final formattedDate = DateFormat('yyyy-MM-dd').format(date);
-                      final file = File(join('${dir.path}/${widget.recording.transcriptionId}_$formattedDate.txt'));
+                      final formattedDate =
+                          DateFormat('yyyy-MM-dd').format(date);
+                      final file = File(join(
+                          '${dir.path}/${widget.recording.transcriptionId}_$formattedDate.txt'));
                       await file.writeAsString(transcription);
+
+                      final snackbar = SnackBar(
+                        content: const Text('Transcription downloaded'),
+                        action: SnackBarAction(
+                          label: 'Open',
+                          onPressed: () async {
+                            if (await file.exists()) {
+                              final result = await OpenFile.open(file.path);
+                              if (result.type == ResultType.done) {
+                                print('File opened');
+                              }
+                            }
+                          },
+                        ),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackbar);
                     }
                     if (value == 'reprocess') {
                       try {

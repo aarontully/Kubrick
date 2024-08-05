@@ -27,7 +27,7 @@ class RecordingService {
 
   Future<bool> hasNetwork() async {
   try {
-    final result = await InternetAddress.lookup('example.com');
+    final result = await InternetAddress.lookup('google.com');
     return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
   } on SocketException catch (_) {
     return false;
@@ -38,10 +38,9 @@ class RecordingService {
     if (await record.hasPermission()) {
       String hours = metadata.timecode.hour.toString().padLeft(2, '0');
       String minutes = metadata.timecode.minute.toString().padLeft(2, '0');
-      String seconds = metadata.timecode.second.toString().padLeft(2, '0');
       Directory directory = await getApplicationDocumentsDirectory();
       String path =
-          '${directory.path}/${metadata.shoot_day}_${metadata.contestant}_${metadata.audio}_${hours}_${minutes}_${seconds}_${metadata.producer}.m4a';
+          '${directory.path}/${metadata.shoot_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}.m4a';
       await record.start(const RecordConfig(), path: path);
       print(path);
       return path;
@@ -149,5 +148,11 @@ class RecordingService {
       print('Failed to transcribe recording: $e');
       return false;
     }
+  }
+
+  Future restartRecording(Metadata metadata) async {
+    await record.stop();
+
+    startRecording(metadata);
   }
 }

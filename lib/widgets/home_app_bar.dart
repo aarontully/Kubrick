@@ -30,11 +30,35 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               case 'Oldest-Newest':
                 controller.recordings.sort((a, b) => a.createdAt.value.compareTo(b.createdAt.value));
                 break;
+              case 'Contestants A-Z':
+                controller.recordings.sort((a, b) => a.metadata.value.contestant.compareTo(b.metadata.value.contestant));
+                break;
+              case 'Contestants Z-A':
+                controller.recordings.sort((a, b) => b.metadata.value.contestant.compareTo(a.metadata.value.contestant));
+                break;
+              case 'Producers A-Z':
+                controller.recordings.sort((a, b) => a.metadata.value.producer.compareTo(b.metadata.value.producer));
+                break;
+              case 'Producers Z-A':
+                controller.recordings.sort((a, b) => b.metadata.value.producer.compareTo(a.metadata.value.producer));
+                break;
+              case 'Shoot Day A-Z':
+                controller.recordings.sort((a, b) => a.metadata.value.shoot_day.compareTo(b.metadata.value.shoot_day));
+                break;
+              case 'Shoot Day Z-A':
+                controller.recordings.sort((a, b) => b.metadata.value.shoot_day.compareTo(a.metadata.value.shoot_day));
+                break;
+              case 'Interview Day A-Z':
+                controller.recordings.sort((a, b) => a.metadata.value.interview_day.compareTo(b.metadata.value.interview_day));
+                break;
+              case 'Interview Day Z-A':
+                controller.recordings.sort((a, b) => b.metadata.value.interview_day.compareTo(a.metadata.value.interview_day));
+                break;
             }
             controller.update();
           },
           itemBuilder: (BuildContext context) {
-            return ['A-Z/1-9', 'Z-A/9-1', 'Newest-Oldest', 'Oldest-Newest'].map((String choice) {
+            return ['A-Z/1-9', 'Z-A/9-1', 'Newest-Oldest', 'Oldest-Newest', 'Contestants A-Z', 'Contestants Z-A', 'Producers A-Z', 'Producers Z-A', 'Shoot Day A-Z', 'Shoot Day Z-A', 'Interview Day A-Z', 'Interview Day Z-A'].map((String choice) {
               return PopupMenuItem<String>(
                 value: choice,
                 child: Text(choice),
