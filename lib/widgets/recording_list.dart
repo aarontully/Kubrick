@@ -5,6 +5,7 @@ import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/file_api_service.dart';
+import 'package:kubrick/widgets/edit_recording_dialog.dart';
 import 'package:kubrick/widgets/recording_list_tile.dart';
 
 class RecordingList extends StatelessWidget {
@@ -56,35 +57,7 @@ class RecordingList extends StatelessWidget {
             } else {
               bool? result = await showDialog(
                 context: context,
-                builder: (context) {
-                  String newName = recording.name.value;
-                  return AlertDialog(
-                    title: const Text('Rename Recording'),
-                    content: TextField(
-                      controller: TextEditingController(text: recording.name.value),
-                      onChanged: (value) {
-                        newName = value;
-                      },
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(false);
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          recording.name.value = newName;
-                          DatabaseHelper.updateRecording(recording);
-                          Get.find<RecordingsController>().updateRecording(recording);
-                          Navigator.of(context).pop(false);
-                        },
-                        child: const Text('Save'),
-                      ),
-                    ],
-                  );
-                },
+                builder: (context) => createEditRecordingDialog(context, recording),
               );
               return result ?? false;
             }
