@@ -11,7 +11,50 @@ void main() {
 
   Get.put(SharedState());
   Get.put(RecordingsController());
-  runApp(const MaterialApp(home: HomeScreen()));
+  runApp(
+    MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.purple,
+          brightness: Brightness.dark,
+        ),
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
+            fontFamily: 'Merriweather',
+            fontSize: 72,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+          displayMedium: TextStyle(
+            fontFamily: 'Merriweather',
+            fontSize: 56,
+            fontWeight: FontWeight.bold,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: 'Merriweather',
+            fontSize: 30,
+            fontWeight: FontWeight.w700
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 24,
+            fontWeight: FontWeight.w500,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Montserrat',
+          ),
+          bodySmall: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+      ),
+      home: const HomeScreen(),
+      debugShowCheckedModeBanner: false
+    ),
+  );
 }
 
 //This cant stay in production, it will make the app vulnerable to attacks

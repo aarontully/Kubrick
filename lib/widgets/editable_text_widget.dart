@@ -50,7 +50,7 @@ class _EditableTextWidgetState extends State<EditableTextWidget> {
   Widget _buildText() {
     return Text(
       widget.initialText,
-      style: widget.style ?? TextStyle(fontSize: 14),
+      style: widget.style ?? const TextStyle(fontSize: 14),
     );
   }
 
@@ -59,7 +59,7 @@ class _EditableTextWidgetState extends State<EditableTextWidget> {
       controller: _controller,
       focusNode: _focusNode,
       autofocus: true,
-      style: widget.style ?? TextStyle(fontSize: 14),
+      style: widget.style ?? const TextStyle(fontSize: 14),
       onFieldSubmitted: (value) {
         widget.onSubmitted(value);
         setState(() {

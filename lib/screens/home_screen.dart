@@ -1,7 +1,6 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/metadata_class.dart';
@@ -78,152 +77,129 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return GetBuilder<RecordingsController>(
       init: RecordingsController(),
-      builder: (recordingsController) => Builder(
-        builder: (context) => Scaffold(
-          body: MaterialApp(
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.purple,
-                brightness: Brightness.dark,
-              ),
-              textTheme: TextTheme(
-                displayLarge:
-                    const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
-                titleLarge: GoogleFonts.oswald(
-                  fontSize: 30,
-                  fontStyle: FontStyle.italic,
-                ),
-                bodyMedium: GoogleFonts.merriweather(),
-                displaySmall: GoogleFonts.pacifico(),
-              ),
-            ),
-            home: Scaffold(
-              appBar: const HomeAppBar(),
-              body: Column(
-                children: <Widget>[
-                  Expanded(
-                      child: RecordingList(
-                    recordings: recordingsController.recordings,
-                    onPlay: (Recording recording) {
-                      print(recording.transcription);
-                    },
-                    onDelete: (Recording recording) {
-                      DatabaseHelper.deleteRecording(recording);
-                      recordingsController.recordings.remove(recording);
-                      setState(() {});
-                    },
-                  )),
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.all(40),
-                      child: Column(
-                        children: <Widget>[
-                          if (sharedState.isRecording.value == true)
-                            Container(
-                              height: 50,
-                              width: 150,
-                              margin: const EdgeInsets.only(bottom: 20),
-                              child: const LoadingIndicator(
-                                indicatorType: Indicator.lineScalePulseOutRapid,
-                                colors: [Color(0xFFE4E4E4)],
-                              ),
-                            )
-                          else
-                            const SizedBox.shrink(),
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                flex: 1,
-                                child: Visibility(
-                                  visible: sharedState.isRecording.value,
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: ElevatedButton(
-                                      onPressed: () async {
-                                        await recordingService.restartRecording(metadata!);
-                                        final snackbar = SnackBar(
-                                          elevation: 0,
-                                          behavior: SnackBarBehavior.floating,
-                                          backgroundColor: Colors.transparent,
-                                          content: AwesomeSnackbarContent(title: 'Restarted', message: 'The recording has now restarted', contentType: ContentType.success),
-                                        );
-                                        ScaffoldMessenger.of(context)
-                                          ..hideCurrentSnackBar()
-                                          ..showSnackBar(snackbar);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        shape: const CircleBorder(),
-                                        padding: const EdgeInsets.all(10),
-                                        iconColor: const Color.fromARGB(255, 18, 116, 18),
-                                      ),
-                                      child: const Icon(
-                                        Icons.restart_alt_outlined,
-                                        size: 40,
-                                      ),
-                                    ),
-                                  ),
+      builder: (recordingsController) => Scaffold(
+        appBar: const HomeAppBar(),
+        body: Column(
+          children: <Widget>[
+            Expanded(
+                child: RecordingList(
+              recordings: recordingsController.recordings,
+              onPlay: (Recording recording) {
+                print(recording.transcription);
+              },
+              onDelete: (Recording recording) {
+                DatabaseHelper.deleteRecording(recording);
+                recordingsController.recordings.remove(recording);
+                setState(() {});
+              },
+            )),
+            Center(
+              child: Container(
+                margin: const EdgeInsets.all(40),
+                child: Column(
+                  children: <Widget>[
+                    if (sharedState.isRecording.value == true)
+                      Container(
+                        height: 50,
+                        width: 150,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        child: const LoadingIndicator(
+                          indicatorType: Indicator.lineScalePulseOutRapid,
+                          colors: [Color(0xFFE4E4E4)],
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: Visibility(
+                            visible: sharedState.isRecording.value,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  await recordingService.restartRecording(metadata!);
+                                  final snackbar = SnackBar(
+                                    elevation: 0,
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.transparent,
+                                    content: AwesomeSnackbarContent(title: 'Restarted', message: 'The recording has now restarted', contentType: ContentType.success),
+                                  );
+                                  ScaffoldMessenger.of(context)
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(snackbar);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  shape: const CircleBorder(),
+                                  padding: const EdgeInsets.all(10),
+                                  iconColor: const Color.fromARGB(255, 18, 116, 18),
+                                ),
+                                child: const Icon(
+                                  Icons.restart_alt_outlined,
+                                  size: 40,
                                 ),
                               ),
-                              Expanded(
-                                flex: 1,
-                                child: Center(
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      if (sharedState.isRecording.value == true) {
-                                        await stopRecording();
-                                      } else {
-                                        await startRecording();
-                                      }
-                                      setState(() {});
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      shape: const CircleBorder(),
-                                      padding: const EdgeInsets.all(10),
-                                      backgroundColor: Colors.red[600],
-                                      iconColor: Colors.red[900],
-                                    ),
-                                    child: Icon(
-                                      sharedState.isRecording.value
-                                          ? Icons.stop
-                                          : Icons.mic_rounded,
-                                      size: 60,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: ElevatedButton(
-                                      onPressed: () async {
-                                        await FilePickerUtil.pickAndSaveFile(context);
-                                        recordingsController.fetchRecordings();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        shape: const CircleBorder(),
-                                        padding: const EdgeInsets.all(10),
-                                        iconColor: Colors.grey[100],
-                                      ),
-                                      child: const Icon(
-                                        Icons.add,
-                                        size: 20,
-                                      )),
-                                ),
-                              )
-                            ],
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Center(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (sharedState.isRecording.value == true) {
+                                  await stopRecording();
+                                } else {
+                                  await startRecording();
+                                }
+                                setState(() {});
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(10),
+                                backgroundColor: Colors.red[600],
+                                iconColor: Colors.red[900],
+                              ),
+                              child: Icon(
+                                sharedState.isRecording.value
+                                    ? Icons.stop
+                                    : Icons.mic_rounded,
+                                size: 60,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: ElevatedButton(
+                                onPressed: () async {
+                                  await FilePickerUtil.pickAndSaveFile(context);
+                                  recordingsController.fetchRecordings();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  shape: const CircleBorder(),
+                                  padding: const EdgeInsets.all(10),
+                                  iconColor: Colors.grey[100],
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 20,
+                                )),
+                          ),
+                        )
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        )
-      )
+          ],
+        ),
+      ),
     );
   }
 }

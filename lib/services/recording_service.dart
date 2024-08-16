@@ -26,13 +26,14 @@ class RecordingService {
   final sharedState = Get.find<SharedState>();
 
   Future<bool> hasNetwork() async {
-  try {
-    final result = await InternetAddress.lookup('google.com');
-    return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-  } on SocketException catch (_) {
-    return false;
+    try {
+      // This is disgusting, but it works for now
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
   }
-}
 
   Future<String> startRecording(Metadata metadata) async {
     if (await record.hasPermission()) {
@@ -40,7 +41,7 @@ class RecordingService {
       String minutes = metadata.timecode.minute.toString().padLeft(2, '0');
       Directory directory = await getApplicationDocumentsDirectory();
       String path =
-          '${directory.path}/${metadata.shoot_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}.m4a';
+          '${directory.path}/${metadata.shoot_day}_${metadata.interview_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}.m4a';
       await record.start(const RecordConfig(), path: path);
       print(path);
       return path;
@@ -110,7 +111,7 @@ class RecordingService {
 
     final uploadId =
         await apiService.initUpload(chunkCount, fileName, fileSize, recording);
-    print('recording service ' + uploadId);
+    print('recording service $uploadId');
     recording.uploadId = uploadId;
     await DatabaseHelper.updateRecording(recording);
 

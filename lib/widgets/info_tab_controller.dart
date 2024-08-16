@@ -219,7 +219,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
             SingleChildScrollView(
               child: Column(
                 children: <Widget>[
-                  ConversationTab(transcription: widget.transcription)
+                  ConversationTab(transcription: widget.transcription, recording: widget.recording),
                 ],
               ),
             ),

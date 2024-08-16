@@ -65,7 +65,7 @@ class FilePickerUtil {
       Recording addedRecording = Recording(
         path: newFile.path,
         createdAt: createdDateTime,
-        name: '${metadata.shoot_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}$ext',
+        name: '${metadata.shoot_day}_${metadata.interview_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}$ext',
         metadata: metadata,
       );
 

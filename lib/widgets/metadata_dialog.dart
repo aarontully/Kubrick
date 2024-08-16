@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:kubrick/controllers/metadata_controller.dart';
 import 'package:kubrick/models/metadata_class.dart';
 
@@ -16,15 +15,16 @@ Widget buildMetadataDialog(BuildContext context) {
           seedColor: Colors.purple,
           brightness: Brightness.dark,
         ),
-        textTheme: TextTheme(
+        textTheme: const TextTheme(
           displayLarge:
-              const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
-          titleLarge: GoogleFonts.oswald(
+              TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
+          titleLarge: TextStyle(
+            fontFamily: 'Oswald',
             fontSize: 30,
-            fontStyle: FontStyle.italic,
           ),
-          bodyMedium: GoogleFonts.merriweather(),
-          displaySmall: GoogleFonts.pacifico(),
+          bodyMedium: TextStyle(
+            fontFamily: 'Merriweather',
+          ),
         ),
       ),
       child: SingleChildScrollView(
@@ -174,7 +174,7 @@ Widget buildMetadataDialog(BuildContext context) {
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.green[700],
                   ),
-                  child: const Text('Start Record'),
+                  child: const Text('Submit'),
                 ),
               ],
             )

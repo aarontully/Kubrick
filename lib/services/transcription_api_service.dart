@@ -101,4 +101,27 @@ class TranscriptionApiService {
 
     return response.body;
   }
+
+  Future<bool> updateSpeakerName(String uploadId, String transcriptionId, String speakerName, int speakerNumber) async {
+    final url = Uri.parse(
+        '$baseUrl/files/$uploadId/transcriptions/$transcriptionId/speaker');
+
+    final response = await http.put(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'name': speakerName,
+        'number': speakerNumber,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update speaker name');
+    }
+
+    return true;
+  }
 }

@@ -23,7 +23,7 @@ class DatabaseHelper {
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT)",
+            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT, speakers TEXT)",
           );
           /* await txn.execute(
             "CREATE TABLE $tableUploads (id INTEGER PRIMARY KEY, recordingPath TEXT, uploadId TEXT, chunkCount INTEGER, uploadedChunks INTEGER, isComplete INTEGER)",
@@ -38,10 +38,14 @@ class DatabaseHelper {
 
     final transcriptionJson = jsonEncode(recording.transcription);
     final metadataJson = jsonEncode(recording.metadata.value.toMap());
+    final speakersJson = jsonEncode(recording.speakers);
 
     await db.insert(
       tableRecordings,
-      recording.toMap()..['transcription'] = transcriptionJson..['metadata'] = metadataJson,
+      recording.toMap()
+        ..['transcription'] = transcriptionJson
+        ..['metadata'] = metadataJson
+        ..['speakers'] = speakersJson,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
@@ -58,6 +62,8 @@ class DatabaseHelper {
       final transcription = jsonDecode(maps[index]['transcription']);
       final metadataMap = jsonDecode(maps[index]['metadata']);
       final metadata = Metadata.fromMap(metadataMap);
+      final speakersJson = maps[index]['speakers'];
+      final speakers = speakersJson != null ? jsonDecode(speakersJson) as List<dynamic> : <dynamic>[];
 
       return Recording(
         path: maps[index][columnPath],
@@ -68,6 +74,7 @@ class DatabaseHelper {
         transcription: transcription,
         transcriptionId: maps[index]['transcriptionId'],
         metadata: metadata,
+        speakers: speakers,
       );
     });
   }
@@ -77,13 +84,21 @@ class DatabaseHelper {
 
     final transcriptionJson = jsonEncode(recording.transcription);
     final metadataJson = jsonEncode(recording.metadata.value.toMap());
+    final speakersJson = jsonEncode(recording.speakers);
 
-    await db.update(
-      tableRecordings,
-      recording.toMap()..['transcription'] = transcriptionJson..['metadata'] = metadataJson,
-      where: 'path = ?',
-      whereArgs: [recording.path.value],
-    );
+    try {
+      await db.update(
+        tableRecordings,
+        recording.toMap()
+          ..['transcription'] = transcriptionJson
+          ..['metadata'] = metadataJson
+          ..['speakers'] = speakersJson,
+        where: 'path = ?',
+        whereArgs: [recording.path.value],
+      );
+    } catch (e) {
+      print('Updating issue: $e');
+    }
 
     await db.close();
   }

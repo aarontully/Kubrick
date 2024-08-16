@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class PlayerWidget extends StatefulWidget {
   final AudioPlayer player;
 
-  PlayerWidget({
+  const PlayerWidget({
     required this.player,
     super.key,
   });
