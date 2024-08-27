@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
+import 'package:path/path.dart';
 
 class ConversationTab extends StatefulWidget {
   final List transcription;
@@ -20,6 +23,8 @@ class _ConversationTabState extends State<ConversationTab> {
   Map<String, dynamic>? transcription;
   Map<String, dynamic>? metadata;
   List<dynamic>? speakers;
+  String? previousSpeakerName;
+  SharedState sharedState = Get.find<SharedState>();
 
   @override
   void initState() {
@@ -35,6 +40,17 @@ class _ConversationTabState extends State<ConversationTab> {
     } else {
       print('Speakers or metadata not found');
     }
+  }
+
+  Color whichTextColour(String sentenceSentiment, bool isSentenceSentiment) {
+    if(isSentenceSentiment) {
+      if(sentenceSentiment == 'positive') {
+        return Colors.green[200]!;
+      } else if(sentenceSentiment == 'negative') {
+        return Colors.red[200]!;
+      }
+    }
+    return Colors.white;
   }
 
   @override
@@ -70,102 +86,110 @@ class _ConversationTabState extends State<ConversationTab> {
                 }
 
                 widgets.add(
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () async {
-                          final textController = TextEditingController();
-                          textController.text = speakerName;
-                          textController.selection = TextSelection(
-                            baseOffset: 0,
-                            extentOffset: speakerName.length,
-                          );
-                          final editedSpeaker = await showDialog<String>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Edit Speaker'),
-                              content: TextField(
-                                controller: textController,
-                                autofocus: true,
-                                onChanged: (value) {
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            final textController = TextEditingController();
+                            textController.text = speakerName;
+                            textController.selection = TextSelection(
+                              baseOffset: 0,
+                              extentOffset: speakerName.length,
+                            );
+                            final editedSpeaker = await showDialog<String>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Edit Speaker'),
+                                content: TextField(
+                                  controller: textController,
+                                  autofocus: true,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      speakerName = value;
+                                    });
+                                  }
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(speakerName),
+                                    child: const Text('Save'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (editedSpeaker != null && editedSpeaker.isNotEmpty) {
+                              try {
+                                final List<dynamic> updatedSpeakers = List.from(speakers!);
+                                for (var i = 0; i < updatedSpeakers.length; i++) {
+                                  if (updatedSpeakers[i]['number'] == paragraphSpeaker) {
+                                    updatedSpeakers[i]['name'] = editedSpeaker;
+                                    break;
+                                  }
+                                }
+                                final success = await TranscriptionApiService().updateSpeakerName(
+                                  widget.recording.uploadId!,
+                                  widget.recording.transcriptionId!,
+                                  speakerName,
+                                  speakerNumber,
+                                );
+                                if(success) {
+                                  speakers = updatedSpeakers;
+                                  widget.recording.speakers = updatedSpeakers;
+                                  await DatabaseHelper.updateRecording(widget.recording);
                                   setState(() {
-                                    speakerName = value;
+                                    speakerName = editedSpeaker;
                                   });
                                 }
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(speakerName),
-                                  child: const Text('Save'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (editedSpeaker != null && editedSpeaker.isNotEmpty) {
-                            try {
-                              final List<dynamic> updatedSpeakers = List.from(speakers!);
-                              for (var i = 0; i < updatedSpeakers.length; i++) {
-                                if (updatedSpeakers[i]['number'] == paragraphSpeaker) {
-                                  updatedSpeakers[i]['name'] = editedSpeaker;
-                                  break;
-                                }
+                              } catch (e) {
+                                print(e);
                               }
-
-                              final success = await TranscriptionApiService().updateSpeakerName(
-                                widget.recording.uploadId!,
-                                widget.recording.transcriptionId!,
-                                speakerName,
-                                speakerNumber,
-                              );
-
-                              if(success) {
-                                speakers = updatedSpeakers;
-                                widget.recording.speakers = updatedSpeakers;
-                                await DatabaseHelper.updateRecording(widget.recording);
-                                setState(() {
-                                  speakerName = editedSpeaker;
-                                });
-                              }
-                            } catch (e) {
-                              print(e);
                             }
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 4.0),
+                          },
                           child: Row(
                             children: [
-                              Text(
-                                formattedTime,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              const Text(
-                                ' - ',
-                              ),
-                              Text(
-                                speakerName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                              if (speakerName != previousSpeakerName)
+                                Text(
+                                  formattedTime,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              if (speakerName != previousSpeakerName)
+                                const Text(
+                                  ' - ',
+                                ),
+                              if (speakerName != previousSpeakerName)
+                                Text(
+                                  speakerName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
                 widgets.add(
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12.0, right: 12.0),
-                    child: Text(
-                      sentences.map((sentence) => sentence['text']).join(' '),
-                      style: const TextStyle(fontWeight: FontWeight.normal),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var sentence in sentences)
+                        Obx(
+                          () => Text(
+                            sentence['text'],
+                            style: TextStyle(color: whichTextColour(sentence['sentiment'], sharedState.isSentenceSentiment.value)),
+                            softWrap: true,
+                          ),
+                        ),
+                    ]
                   )
                 );
+                previousSpeakerName = speakerName;
                 return widgets;
                 }).toList(),
               ),

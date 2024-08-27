@@ -11,7 +11,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Kubrick Transcriber'),
+      title: const Text('Kubrick Transcriber', overflow: TextOverflow.clip,),
       actions: [
         PopupMenuButton(
           icon: const Icon(Icons.filter_list),

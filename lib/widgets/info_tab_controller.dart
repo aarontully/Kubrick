@@ -90,12 +90,17 @@ class _InfoTabControllerState extends State<InfoTabController> {
                         child: Text('Download audio'),
                       ), */
                       const PopupMenuDivider(),
+                      CheckedPopupMenuItem(
+                        value: 'sentenceSentiment',
+                        checked: sharedState.isSentenceSentiment.value,
+                        child: const Text('Sentence Sentiment'),
+                      ),
+                      const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: 'delete',
                         child: Text('Delete'),
                       )
                     ];
-
                     if (widget.recording.status.value != 'Uploaded') {
                       menuItems.insert(
                           1,
@@ -157,6 +162,10 @@ class _InfoTabControllerState extends State<InfoTabController> {
                         sharedState.setProcessing(false);
                       }
                     }
+                    if (value == 'sentenceSentiment') {
+                      sharedState.setSentenceSentiment(
+                          !sharedState.isSentenceSentiment.value);
+                    }
                     if (value == 'delete') {
                       try {
                         DatabaseHelper.deleteRecording(widget.recording);
@@ -200,7 +209,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                             : 'Local recording only',
                   ),
                 ),
-                ListTile(
+                /* ListTile(
                   title: const Text('Summary'),
                   subtitle: SelectableText(
                       (widget.summary.isEmpty) ? 'No summary' : widget.summary),
@@ -213,7 +222,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: widget.summary));
                       }),
-                ),
+                ), */
               ],
             ),
             SingleChildScrollView(
