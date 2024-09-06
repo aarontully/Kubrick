@@ -9,15 +9,12 @@ import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
 import 'package:kubrick/utils/chunk_transformer.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path/path.dart' as p;
 
 import '../controllers/shared_state.dart';
 
 class RecordingService {
-  final AudioRecorder record = AudioRecorder();
   final Uuid uuid = const Uuid();
   final DatabaseHelper databaseHelper = DatabaseHelper();
   final FileApiService apiService = FileApiService();
@@ -35,24 +32,9 @@ class RecordingService {
     }
   }
 
-  Future<String> startRecording(Metadata metadata) async {
-    if (await record.hasPermission()) {
-      String hours = metadata.timecode.hour.toString().padLeft(2, '0');
-      String minutes = metadata.timecode.minute.toString().padLeft(2, '0');
-      Directory directory = await getApplicationDocumentsDirectory();
-      String path =
-          '${directory.path}/${metadata.shoot_day}_${metadata.interview_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}.m4a';
-      await record.start(const RecordConfig(), path: path);
-      print(path);
-      return path;
-    }
-    throw Exception('Could not start recording');
-  }
-
-  Future<Recording?> stopRecording(Metadata metadata) async {
+  Future<Recording?> stopRecording(Metadata metadata, String? path) async {
     sharedState.setProcessing(true);
     sharedState.setUploadProgress(0.1);
-    String? path = await record.stop();
 
     if (path != null) {
       DateTime now = DateTime.now();
@@ -152,8 +134,8 @@ class RecordingService {
   }
 
   Future restartRecording(Metadata metadata) async {
-    await record.stop();
+    //await .stop();
 
-    startRecording(metadata);
+    //startRecording(metadata);
   }
 }

@@ -6,7 +6,6 @@ import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
-import 'package:path/path.dart';
 
 class ConversationTab extends StatefulWidget {
   final List transcription;
@@ -23,6 +22,8 @@ class _ConversationTabState extends State<ConversationTab> {
   Map<String, dynamic>? transcription;
   Map<String, dynamic>? metadata;
   List<dynamic>? speakers;
+  List<dynamic>? utterances;
+  List<String> sentences = [];
   String? previousSpeakerName;
   SharedState sharedState = Get.find<SharedState>();
 
@@ -33,6 +34,8 @@ class _ConversationTabState extends State<ConversationTab> {
     transcription = widget.recording.transcription!;
     metadata = transcription!['data']['transcription']['result']['metadata'];
 
+    utterances = transcription!['data']['transcription']['result']['results']['utterances'];
+
     if (metadata != null && widget.recording.speakers.isEmpty) {
       speakers = metadata!['speakers'];
     } else if (widget.recording.speakers.isNotEmpty) {
@@ -42,15 +45,36 @@ class _ConversationTabState extends State<ConversationTab> {
     }
   }
 
-  Color whichTextColour(String sentenceSentiment, bool isSentenceSentiment) {
-    if(isSentenceSentiment) {
-      if(sentenceSentiment == 'positive') {
-        return Colors.green[200]!;
-      } else if(sentenceSentiment == 'negative') {
-        return Colors.red[200]!;
+  Color getSentimentColour(String wordSentiment, bool isWordSentiment, double wordConfidence, bool isWordConfidence) {
+    if (isWordConfidence && getConfidenceColour(wordConfidence, isWordConfidence) != Colors.transparent) {
+      return Colors.black;
+    }
+
+    if(isWordSentiment) {
+      if(wordSentiment == 'positive') {
+        return Colors.green;
+      } else if(wordSentiment == 'negative') {
+        return Colors.red;
+      } else if(wordSentiment == 'neutral') {
+        return Colors.white;
+      } else {
+        return Colors.white;
       }
     }
     return Colors.white;
+  }
+
+  Color getConfidenceColour(double wordConfidence, bool isWordConfidence) {
+    if(isWordConfidence) {
+      if(wordConfidence <= 0.4) {
+        return Colors.green;
+      } else if(wordConfidence <= 0.6) {
+        return Colors.yellow;
+      } else {
+        return Colors.transparent;
+      }
+    }
+    return Colors.transparent;
   }
 
   @override
@@ -65,7 +89,7 @@ class _ConversationTabState extends State<ConversationTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
               children: widget.transcription.expand<Widget>((paragraph) {
                 int paragraphSpeaker = paragraph['speaker'];
-                var sentences = paragraph['sentences'];
+                //sentences = paragraph['sentences'];
                 double paragraphStartTime = paragraph['start']; //2.1599998
                 final createdTime = metadata!['created']; //"2024-08-16T02:13:25.471Z"
                 int paragraphStartTimeMs = (paragraphStartTime * 1000).toInt();
@@ -87,7 +111,7 @@ class _ConversationTabState extends State<ConversationTab> {
 
                 widgets.add(
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
+                    padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
                     child: Row(
                       children: [
                         GestureDetector(
@@ -175,18 +199,42 @@ class _ConversationTabState extends State<ConversationTab> {
                   ),
                 );
                 widgets.add(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var sentence in sentences)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        //for (var sentence in sentences)
+                          //Obx(
+                            //() => Text(
+                              //sentence['text'],
+                              //style: TextStyle(color: whichTextColour(sentence['sentiment'], sharedState.isSentenceSentiment.value)),
+                              //softWrap: true,
+                            //),
+                          //),],
+                          //Text(sentence),
                         Obx(
-                          () => Text(
-                            sentence['text'],
-                            style: TextStyle(color: whichTextColour(sentence['sentiment'], sharedState.isSentenceSentiment.value)),
-                            softWrap: true,
+                          () => Wrap(
+                            children: [
+                              for (var utterance in utterances!)
+                                for (var word in utterance['words'])
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: getConfidenceColour(word['confidence'], sharedState.isWordConfidence.value),
+                                    ),
+                                    child: Text(
+                                        word['punctuated_word'] + ' ',
+                                        style: TextStyle(
+                                          color: getSentimentColour(word['sentiment'], sharedState.isWordSentiment.value, word['confidence'], sharedState.isWordConfidence.value),
+                                        ),
+                                        softWrap: true,
+                                      ),
+                                  ),
+                            ],
                           ),
-                        ),
-                    ]
+                        )
+                      ]
+                    ),
                   )
                 );
                 previousSpeakerName = speakerName;

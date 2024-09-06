@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:audioplayers/audioplayers.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
@@ -14,7 +13,7 @@ import 'package:kubrick/services/recording_service.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
 import 'package:kubrick/widgets/conversation_tab.dart';
 import 'package:kubrick/widgets/player_widget.dart';
-import 'package:open_file/open_file.dart';
+import 'package:open_file/open_file.dart' as open_file;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -38,25 +37,18 @@ class InfoTabController extends StatefulWidget {
 }
 
 class _InfoTabControllerState extends State<InfoTabController> {
-  late AudioPlayer player = AudioPlayer();
+  PlayerController controller = PlayerController();
   final FileApiService fileApiService = FileApiService();
-  final TranscriptionApiService transcriptionService =
-      TranscriptionApiService();
+  final TranscriptionApiService transcriptionService = TranscriptionApiService();
   SharedState sharedState = Get.find<SharedState>();
 
   @override
   void initState() {
     super.initState();
-    player = AudioPlayer();
-    player.setReleaseMode(ReleaseMode.stop);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      player.setSource(DeviceFileSource(widget.recording.path.value));
-    });
   }
 
   @override
   void dispose() {
-    player.dispose();
     super.dispose();
   }
 
@@ -91,9 +83,14 @@ class _InfoTabControllerState extends State<InfoTabController> {
                       ), */
                       const PopupMenuDivider(),
                       CheckedPopupMenuItem(
-                        value: 'sentenceSentiment',
-                        checked: sharedState.isSentenceSentiment.value,
-                        child: const Text('Sentence Sentiment'),
+                        value: 'wordSentiment',
+                        checked: sharedState.isWordSentiment.value,
+                        child: const Text('Word Sentiment'),
+                      ),
+                      CheckedPopupMenuItem(
+                        value: 'wordConfidence',
+                        checked: sharedState.isWordConfidence.value,
+                        child: const Text('Word Confidence'),
                       ),
                       const PopupMenuDivider(),
                       const PopupMenuItem(
@@ -135,10 +132,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                           label: 'Open',
                           onPressed: () async {
                             if (await file.exists()) {
-                              final result = await OpenFile.open(file.path);
-                              if (result.type == ResultType.done) {
-                                print('File opened');
-                              }
+                              final result = await open_file.OpenFile.open(file.path);
                             }
                           },
                         ),
@@ -162,9 +156,13 @@ class _InfoTabControllerState extends State<InfoTabController> {
                         sharedState.setProcessing(false);
                       }
                     }
-                    if (value == 'sentenceSentiment') {
-                      sharedState.setSentenceSentiment(
-                          !sharedState.isSentenceSentiment.value);
+                    if (value == 'wordConfidence') {
+                      sharedState.setWordConfidence(
+                          !sharedState.isWordConfidence.value);
+                    }
+                    if (value == 'wordSentiment') {
+                      sharedState.setWordSentiment(
+                          !sharedState.isWordSentiment.value);
                     }
                     if (value == 'delete') {
                       try {
@@ -235,7 +233,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
             Center(
               child: Column(
                 children: <Widget>[
-                  PlayerWidget(player: player),
+                  PlayerWidget(path: widget.recording.path.value),
                 ],
               ),
             ),

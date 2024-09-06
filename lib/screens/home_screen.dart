@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,7 +14,10 @@ import 'package:kubrick/utils/permission_checker.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
 import 'package:kubrick/widgets/metadata_dialog.dart';
 import 'package:kubrick/widgets/recording_list.dart';
-import 'package:loading_indicator/loading_indicator.dart';
+//import 'package:kubrick/widgets/sound_wave.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:path_provider/path_provider.dart';
+//import 'package:loading_indicator/loading_indicator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final RecordingService recordingService = RecordingService();
   var sharedState = Get.find<SharedState>();
   Metadata? metadata;
+  final RecorderController controller = RecorderController();
 
   @override
   void initState() {
@@ -41,6 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future startRecording() async {
+    if (!await controller.checkPermission()){
+      return;
+    }
     metadata = await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -50,7 +59,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (metadata != null) {
       try {
-        await recordingService.startRecording(metadata!);
+        String hours = metadata!.timecode.hour.toString().padLeft(2, '0');
+        String minutes = metadata!.timecode.minute.toString().padLeft(2, '0');
+        Directory directory = await getApplicationDocumentsDirectory();
+        String path = '${directory.path}/${metadata!.shoot_day}_${metadata!.interview_day}_${metadata!.contestant}_${metadata!.camera}_${metadata!.audio}_${hours}_${minutes}_${metadata!.producer}.m4a';
+        await controller.record(path: path);
         sharedState.setRecording(true);
       } catch (e) {
         print(e);
@@ -59,10 +72,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future stopRecording() async {
+    controller.reset();
     try {
       sharedState.setRecording(false);
       setState(() {});
-      await recordingService.stopRecording(metadata!);
+      final path = await controller.stop();
+      await recordingService.stopRecording(metadata!, path);
     } catch (e) {
       print(e);
       if (e is FormatException) {
@@ -100,13 +115,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: <Widget>[
                     if (sharedState.isRecording.value == true)
                       Container(
-                        height: 50,
-                        width: 150,
-                        margin: const EdgeInsets.only(bottom: 20),
-                        child: const LoadingIndicator(
-                          indicatorType: Indicator.lineScalePulseOutRapid,
-                          colors: [Color(0xFFE4E4E4)],
-                        ),
+                          height: 50,
+                          width: 150,
+                          margin: const EdgeInsets.only(bottom: 20),
+                          child: AudioWaveforms(
+                            enableGesture: false,
+                            size: Size(
+                              MediaQuery.of(context).size.width / 2, 50,
+                            ),
+                            recorderController: controller,
+                            waveStyle: const WaveStyle(
+                              waveColor: Colors.blue,
+                            ),
+                          ),
                       )
                     else
                       const SizedBox.shrink(),
