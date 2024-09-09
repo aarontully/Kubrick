@@ -132,7 +132,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                           label: 'Open',
                           onPressed: () async {
                             if (await file.exists()) {
-                              final result = await open_file.OpenFile.open(file.path);
+                              await open_file.OpenFile.open(file.path);
                             }
                           },
                         ),

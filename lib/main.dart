@@ -1,18 +1,20 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:get/instance_manager.dart';
+import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
-import 'package:kubrick/screens/home_screen.dart';
+import 'package:kubrick/services/auth_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
+  AuthService authService = AuthService();
 
   Get.put(SharedState());
   Get.put(RecordingsController());
   runApp(
-    MaterialApp(
+    GetMaterialApp(
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -51,7 +53,16 @@ void main() {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: FutureBuilder<void>(
+        future: authService.checkToken(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else {
+            return const SizedBox.shrink();
+          }
+        },
+      ),
       debugShowCheckedModeBanner: false
     ),
   );

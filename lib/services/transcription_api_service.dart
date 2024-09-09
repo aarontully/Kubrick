@@ -3,15 +3,17 @@ import 'dart:convert';
 
 import 'package:kubrick/models/transcription_class.dart';
 import 'package:http/http.dart' as http;
+import 'package:kubrick/services/auth_service.dart';
 
 class TranscriptionApiService {
-  final String baseUrl =
-      'https://transcription.staging.endemolshine.com.au/api/v1';
-  final String token = '3de210c9-5f7d-45bd-803d-67edcc6fcfe7';
+  final String baseUrl = 'https://transcription.staging.endemolshine.com.au/api/v1';
+  AuthService authService = AuthService();
 
   Future<Data> fetchTranscription(
       String fileId, int chunks, int size, String name) async {
     final url = Uri.parse('$baseUrl/files/$fileId/transcriptions');
+    final session = await authService.getToken();
+    final token = session['auth_token'];
     final response = await http.post(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Bearer $token',
@@ -27,6 +29,8 @@ class TranscriptionApiService {
 
   Future<String> postTranscription(String uploadId) async {
     final url = Uri.parse('$baseUrl/files/$uploadId/transcriptions');
+    final session = await authService.getToken();
+    final token = session['auth_token'];
     final response = await http.post(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Bearer $token',
@@ -44,6 +48,8 @@ class TranscriptionApiService {
 
   Future<Map<String, dynamic>> pollTranscription(
       String uploadId, String transcriptionId) async {
+        final session = await authService.getToken();
+    final token = session['auth_token'];
     final url =
         Uri.parse('$baseUrl/files/$uploadId/transcriptions/$transcriptionId');
     final completer = Completer<Map<String, dynamic>>();
@@ -87,8 +93,9 @@ class TranscriptionApiService {
   }
 
   Future downloadTranscription(String uploadId, String transcriptionId) async {
-    final url = Uri.parse(
-        '$baseUrl/files/$uploadId/transcriptions/$transcriptionId/download');
+    final url = Uri.parse('$baseUrl/files/$uploadId/transcriptions/$transcriptionId/download');
+    final session = await authService.getToken();
+    final token = session['auth_token'];
 
     final response = await http.get(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -103,8 +110,9 @@ class TranscriptionApiService {
   }
 
   Future<bool> updateSpeakerName(String uploadId, String transcriptionId, String speakerName, int speakerNumber) async {
-    final url = Uri.parse(
-        '$baseUrl/files/$uploadId/transcriptions/$transcriptionId/speaker');
+    final url = Uri.parse('$baseUrl/files/$uploadId/transcriptions/$transcriptionId/speaker');
+    final session = await authService.getToken();
+    final token = session['auth_token'];
 
     final response = await http.put(
       url,
