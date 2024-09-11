@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text;
 
       if (email == '' || password == '') {
-        Get.snackbar('Error', 'Email or Password cannot be empty');
+        Get.snackbar('Error', 'Email or Password cannot be empty', colorText: Colors.white, backgroundColor: Colors.red);
         return;
       }
 
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final expiry = payload['expires_at'];
 
       if(payload.isEmpty) {
-        Get.snackbar('Error', 'Invalid email or password');
+        Get.snackbar('Error', 'Invalid email or password', colorText: Colors.white, backgroundColor: Colors.red);
         return;
       }
 
@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       // Show an error message
       print('Error: $e');
-      //Get.snackbar('Error', 'An error occurred: $e');
+      Get.snackbar('Error', 'An error occurred: $e', colorText: Colors.white, backgroundColor: Colors.red);
     }
   }
 

@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
+import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/models/sentence_class.dart';
 
 class PlayerWidget extends StatefulWidget {
   final String path;
+  final Recording recording;
 
   const PlayerWidget({
     required this.path,
+    required this.recording,
     super.key,
   });
 
@@ -18,13 +22,21 @@ class PlayerWidget extends StatefulWidget {
 class _PlayerWidgetState extends State<PlayerWidget> {
   PlayerController controller = PlayerController();
   dynamic waveFormData;
-  bool isPlaying = false;
-  bool isPaused = false;
+  int currentPosition = 0;
+  List<Sentence> sentences = [];
 
   @override
   void initState() {
     super.initState();
     _initialize();
+    controller.onCurrentDurationChanged.listen((event) {
+      setState(() {
+        currentPosition = event;
+      });
+    });
+    sentences = (widget.recording.transcription!['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'][0]['sentences'] as List)
+      .map((sentence) => Sentence.fromMap(sentence))
+      .toList();
   }
 
   Future<void> _initialize() async {
@@ -49,26 +61,12 @@ class _PlayerWidgetState extends State<PlayerWidget> {
     });
   }
 
+  void updateIcon() => setState(() {});
+
   @override
   void dispose() {
     controller.dispose();
     super.dispose();
-  }
-
-  Future<void> play() async {
-    isPlaying = true;
-    await controller.startPlayer(finishMode: FinishMode.stop);
-  }
-
-  Future<void> pause() async {
-    isPaused = true;
-    await controller.pausePlayer();
-  }
-
-  Future<void> stop() async {
-    isPlaying = false;
-    isPaused = false;
-    await controller.stopPlayer();
   }
 
   @override
@@ -77,42 +75,55 @@ class _PlayerWidgetState extends State<PlayerWidget> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
+        if (waveFormData != null)
         Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            IconButton(
-              key: const Key('play_button'),
-              onPressed: isPlaying ? null : play,
-              iconSize: 48.0,
-              icon: const Icon(Icons.play_arrow),
-            ),
-            IconButton(
-              key: const Key('pause_button'),
-              onPressed: isPlaying ? () => pause() : null,
-              iconSize: 48.0,
-              icon: const Icon(Icons.pause),
-            ),
-            IconButton(
-              key: const Key('stop_button'),
-              onPressed: isPlaying || isPaused ? () => stop() : null,
-              iconSize: 48.0,
-              icon: const Icon(Icons.stop),
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            if(!controller.playerState.isStopped)
+              IconButton(
+                onPressed: () async {
+                  if (controller.playerState.isPlaying) {
+                    await controller.pausePlayer();
+                  } else {
+                    await controller.startPlayer(finishMode: FinishMode.loop);
+                  }
+                  updateIcon();
+                },
+                icon: Icon(controller.playerState.isPlaying ? Icons.stop : Icons.play_arrow),
+                color: Colors.white,
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+              ),
+            Expanded(
+              child: AudioFileWaveforms(
+                size: Size(MediaQuery.of(context).size.width, 100),
+                playerController: controller,
+                enableSeekGesture: true,
+                waveformType: WaveformType.long,
+                playerWaveStyle: const PlayerWaveStyle(
+                  fixedWaveColor: Colors.white54,
+                  liveWaveColor: Colors.blue,
+                  spacing: 4.0,
+                ),
+                waveformData: waveFormData,
+              ),
             ),
           ],
         ),
-        if (waveFormData != null)
-          AudioFileWaveforms(
-            size: Size(MediaQuery.of(context).size.width, 100.0),
-            playerController: controller,
-            enableSeekGesture: true,
-            waveformType: WaveformType.long,
-            waveformData: waveFormData,
-            playerWaveStyle: const PlayerWaveStyle(
-              fixedWaveColor: Colors.white54,
-              liveWaveColor: Colors.blue,
-              spacing: 6.0,
-            ),
-          )
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: sentences.length,
+          itemBuilder: (context, index) {
+            final sentence = sentences[index];
+            final isActive = (currentPosition / 1000) >= sentence.startTime && (currentPosition / 1000) <= sentence.endTime;
+            return Text(
+              sentence.text,
+              style: TextStyle(
+                color: isActive ? Colors.blue : Colors.grey,
+              ),
+            );
+          },
+        )
       ],
     );
   }

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -37,7 +36,6 @@ class InfoTabController extends StatefulWidget {
 }
 
 class _InfoTabControllerState extends State<InfoTabController> {
-  PlayerController controller = PlayerController();
   final FileApiService fileApiService = FileApiService();
   final TranscriptionApiService transcriptionService = TranscriptionApiService();
   SharedState sharedState = Get.find<SharedState>();
@@ -233,7 +231,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
             Center(
               child: Column(
                 children: <Widget>[
-                  PlayerWidget(path: widget.recording.path.value),
+                  PlayerWidget(path: widget.recording.path.value, recording: widget.recording),
                 ],
               ),
             ),

@@ -14,10 +14,8 @@ import 'package:kubrick/utils/permission_checker.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
 import 'package:kubrick/widgets/metadata_dialog.dart';
 import 'package:kubrick/widgets/recording_list.dart';
-//import 'package:kubrick/widgets/sound_wave.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:path_provider/path_provider.dart';
-//import 'package:loading_indicator/loading_indicator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
