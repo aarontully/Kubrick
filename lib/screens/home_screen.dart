@@ -7,8 +7,10 @@ import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/auth_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/recording_service.dart';
+import 'package:kubrick/services/sync_service.dart';
 import 'package:kubrick/utils/file_picker_util.dart';
 import 'package:kubrick/utils/permission_checker.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
@@ -29,14 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
   var sharedState = Get.find<SharedState>();
   Metadata? metadata;
   final RecorderController controller = RecorderController();
+  AuthService authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     sharedState.checkConnectivity();
-    PermissionChecker.requestPermissions().then((_) {
+    PermissionChecker.requestPermissions().then((_) async {
+      var userId = await authService.getUserId();
+      sharedState.setUser(userId);
       Get.find<RecordingsController>().fetchRecordings();
     });
+    SyncService().syncRecordings();
   }
 
   @override

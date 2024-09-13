@@ -12,6 +12,7 @@ class SharedState extends GetxController {
   Rx<Recording?> currentRecording = Rx<Recording?>(null);
   RxBool isWordSentiment = false.obs;
   RxBool isWordConfidence = true.obs;
+  RxString currentUser = ''.obs;
 
   void setLoading(bool value) {
     isLoading.value = value;
@@ -41,6 +42,10 @@ class SharedState extends GetxController {
 
   void setWordConfidence(value) {
     isWordConfidence.value = value;
+  }
+
+  void setUser(String user) {
+    currentUser.value = user;
   }
 
   Future<bool> checkConnectivity() async {

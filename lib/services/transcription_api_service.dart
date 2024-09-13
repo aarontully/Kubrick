@@ -1,31 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-
-import 'package:kubrick/models/transcription_class.dart';
 import 'package:http/http.dart' as http;
 import 'package:kubrick/services/auth_service.dart';
 
 class TranscriptionApiService {
   final String baseUrl = 'https://transcription.staging.endemolshine.com.au/api/v1';
   AuthService authService = AuthService();
-
-  Future<Data> fetchTranscription(
-      String fileId, int chunks, int size, String name) async {
-    final url = Uri.parse('$baseUrl/files/$fileId/transcriptions');
-    final session = await authService.getToken();
-    final token = session['auth_token'];
-    final response = await http.post(url, headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': 'Bearer $token',
-    });
-
-    if (response.statusCode == 200) {
-      final responseBody = jsonDecode(response.body);
-      return Data.fromJson(responseBody['data']);
-    } else {
-      throw Exception('Failed to transcribe audio');
-    }
-  }
 
   Future<String> postTranscription(String uploadId) async {
     final url = Uri.parse('$baseUrl/files/$uploadId/transcriptions');

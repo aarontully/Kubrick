@@ -1,9 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:yaml/yaml.dart';
 
 class DatabaseHelper {
   static const String databaseName = 'recordings.db';
@@ -16,19 +20,33 @@ class DatabaseHelper {
   static const String columnStatus = 'status';
   static const String columnUploadId = 'uploadId';
 
+  static Future<int> getAppVersion() async {
+    final pubspec = await rootBundle.loadString('pubspec.yaml');
+    final pubspecMap = loadYaml(pubspec);
+    final version = pubspecMap['version'] as String;
+    final versionParts = version.split('.');
+    final versionString = versionParts.join('');
+    return int.parse(versionString);
+  }
+
   static Future<Database> initDatabase() async {
+    final version = await getAppVersion();
     return openDatabase(
       join(await getDatabasesPath(), databaseName),
-      version: 1,
+      version: version,
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT, speakers TEXT)",
+            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT, user_id TEXT)",
           );
-          /* await txn.execute(
-            "CREATE TABLE $tableUploads (id INTEGER PRIMARY KEY, recordingPath TEXT, uploadId TEXT, chunkCount INTEGER, uploadedChunks INTEGER, isComplete INTEGER)",
-          ); */
         });
+      },
+      onUpgrade: (db, oldVersion, newVersion) {
+        if (oldVersion < 15) { // version 0.1.5
+          db.execute(
+            "ALTER TABLE $tableRecordings ADD COLUMN speakers TEXT, ADD COLUMN user_id TEXT",
+          );
+        }
       },
     );
   }
@@ -53,8 +71,10 @@ class DatabaseHelper {
   }
 
   static Future<List<Recording>> getRecordings() async {
+    SharedState sharedState = Get.find<SharedState>();
+    String userId = sharedState.currentUser.value;
     final db = await initDatabase();
-    final List<Map<String, dynamic>> maps = await db.query(tableRecordings);
+    final List<Map<String, dynamic>> maps = await db.query(tableRecordings, where: 'user_id = ?', whereArgs: [userId]);
 
     await db.close();
 
@@ -75,6 +95,7 @@ class DatabaseHelper {
         transcriptionId: maps[index]['transcriptionId'],
         metadata: metadata,
         speakers: speakers,
+        userId: maps[index]['user_id'],
       );
     });
   }

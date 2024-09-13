@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
 
 class FileApiService {
   final String baseUrl = 'https://transcription.staging.endemolshine.com.au/api/v1';
   final String token = '3de210c9-5f7d-45bd-803d-67edcc6fcfe7';
+  final SharedState sharedState = Get.find<SharedState>();
 
   Future<http.Response> get(String endpoint) async {
     final url = Uri.parse('$baseUrl/$endpoint');
@@ -22,7 +25,31 @@ class FileApiService {
   }
 
   // GET: files
-  // TODO: get files from the server and add files that arent already on the local device as an option to download
+  Future<List<dynamic>> getRemoteFiles() async {
+    final url = Uri.parse('$baseUrl/files');
+
+    String userId = sharedState.currentUser.value;
+    final queryParams = {
+      'where': jsonEncode({'uploader_id': userId}),
+    };
+
+    final uri = url.replace(queryParameters: queryParams);
+
+    final response = await http.get(
+      uri,
+      headers: <String, String> {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if(response.statusCode == 200) {
+      final Map<String, dynamic> responseBody = jsonDecode(response.body);
+      return responseBody['data']['files'];
+    } else {
+      throw Exception('Failed to get files');
+    }
+  }
 
   // POST: /files/upload
   Future<String> initUpload(int chunks, String name, int size, Recording recording) async {

@@ -14,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+  bool isObscure = true;
 
   void login() async {
     try {
@@ -28,13 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
       final payload = await _authService.login(_emailController.text, _passwordController.text);
       final token = payload['token'];
       final expiry = payload['expires_at'];
+      final userId = payload['user_id'];
 
       if(payload.isEmpty) {
         Get.snackbar('Error', 'Invalid email or password', colorText: Colors.white, backgroundColor: Colors.red);
         return;
       }
 
-      await _authService.storeToken(token!, DateTime.parse(expiry!));
+      await _authService.storeToken(token!, DateTime.parse(expiry!), userId!);
       Get.off(() => const HomeScreen());
       print('Navigated to HomeScreen');
     } catch (e) {
@@ -56,16 +58,38 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email'
+              ),
             ),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    isObscure ? Icons.visibility : Icons.visibility_off
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isObscure = !isObscure;
+                    });
+                  },
+                )
+              ),
+              obscureText: isObscure,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: login,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+                textStyle: const TextStyle(fontSize: 18.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
               child: const Text('Login'),
             ),
           ],

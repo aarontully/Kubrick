@@ -11,6 +11,7 @@ class AuthService {
   final storage = const FlutterSecureStorage(
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
+  //SharedState sharedState = Get.find<SharedState>();
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
@@ -33,11 +34,12 @@ class AuthService {
     }
   }
 
-  Future<void> storeToken(String token, DateTime expiresAt) async {
+  Future<void> storeToken(String token, DateTime expiresAt, String userId) async {
     try {
       await storage.write(key: 'auth_token', value: token);
       await storage.write(key: 'expires_at', value: expiresAt.toIso8601String());
-      print('Token stored: $token, It will expire on: $expiresAt');
+      await storage.write(key: 'user_id', value: userId);
+      print('Token stored: $token, It will expire on: $expiresAt for user: $userId');
     } catch (e) {
       print('Error: $e');
     }
@@ -54,10 +56,15 @@ class AuthService {
     return {};
   }
 
+  Future<String> getUserId() async {
+    final sessionData = await getToken();
+    return sessionData['user_id'] ?? '';
+  }
+
   Future<void> checkToken() async {
     final sessionData = await getToken();
-    final token = sessionData['token'];
-    final expiresAtStr = sessionData['expiresAt'];
+    final token = sessionData['auth_token'];
+    final expiresAtStr = sessionData['expires_at'];
     if (token == null || expiresAtStr == null) {
       Get.off(() => const LoginScreen());
       return;
