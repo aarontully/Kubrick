@@ -61,7 +61,7 @@ class AuthService {
     return sessionData['user_id'] ?? '';
   }
 
-  Future<void> checkToken() async {
+  /* Future<void> checkToken() async {
     final sessionData = await getToken();
     final token = sessionData['auth_token'];
     final expiresAtStr = sessionData['expires_at'];
@@ -72,11 +72,12 @@ class AuthService {
 
     final expiresAt = DateTime.parse(expiresAtStr);
     if (DateTime.now().isAfter(expiresAt)) {
+      navigator.push(() => const LoginScreen());
       Get.to(() => const LoginScreen());
     } else {
       Get.to(() => const HomeScreen());
     }
-  }
+  } */
 
   Future<void> logout() async {
     await storage.deleteAll();

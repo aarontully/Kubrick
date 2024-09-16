@@ -79,17 +79,17 @@ class _InfoTabControllerState extends State<InfoTabController> {
                         value: 'downloadAudio',
                         child: Text('Download audio'),
                       ), */
-                      const PopupMenuDivider(),
-                      CheckedPopupMenuItem(
-                        value: 'wordSentiment',
-                        checked: sharedState.isWordSentiment.value,
-                        child: const Text('Word Sentiment'),
+                      /* const PopupMenuDivider(), */
+                      /* CheckedPopupMenuItem(
+                        value: 'sentenceSentiment',
+                        checked: sharedState.isSentenceSentiment.value,
+                        child: const Text('Sentence Sentiment'),
                       ),
                       CheckedPopupMenuItem(
                         value: 'wordConfidence',
                         checked: sharedState.isWordConfidence.value,
                         child: const Text('Word Confidence'),
-                      ),
+                      ), */
                       const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: 'delete',
@@ -158,9 +158,9 @@ class _InfoTabControllerState extends State<InfoTabController> {
                       sharedState.setWordConfidence(
                           !sharedState.isWordConfidence.value);
                     }
-                    if (value == 'wordSentiment') {
-                      sharedState.setWordSentiment(
-                          !sharedState.isWordSentiment.value);
+                    if (value == 'sentenceSentiment') {
+                      sharedState.setSentenceSentiment(
+                          !sharedState.isSentenceSentiment.value);
                     }
                     if (value == 'delete') {
                       try {

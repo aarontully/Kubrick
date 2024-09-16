@@ -68,10 +68,14 @@ class FileApiService {
     );
 
     final responseBody = jsonDecode(response.body);
-    if(responseBody['data'] != null && responseBody['data']['file'] != null) {
-      return responseBody['data']['file']['id'];
+  if (response.statusCode == 200) {
+      if(responseBody['data'] != null && responseBody['data']['file'] != null) {
+        return responseBody['data']['file']['id'];
+      } else {
+        throw Exception('Failed to initialise: ${responseBody['error']} - ${responseBody['message']}');
+      }
     } else {
-      throw Exception('Failed to init upload');
+      throw Exception('Failed to initialise: ${responseBody['message']}');
     }
   }
 

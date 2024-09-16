@@ -40,11 +40,11 @@ class SyncService {
         // Local recording does not exist remotely
         // need to upload file to remote db
 
-        final file = File(remoteRecording.path.value);
+        final file = File(localRecording.path.value);
         final fileSize = await file.length();
         const chunkSize = 1024 * 1024; //1MB
         final chunkCount = (fileSize / chunkSize).ceil();
-        final fileName = p.basename(remoteRecording.path.value);
+        final fileName = p.basename(localRecording.path.value);
 
         await fileApiService.initUpload(chunkCount, fileName, chunkSize,localRecording);
       } else {
