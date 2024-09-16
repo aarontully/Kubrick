@@ -165,6 +165,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                     if (value == 'delete') {
                       try {
                         DatabaseHelper.deleteRecording(widget.recording);
+                        print('Del init from info_tab_controller');
                       } catch (e) {
                         print('Failed to delete local recording: $e');
                       }
@@ -184,7 +185,9 @@ class _InfoTabControllerState extends State<InfoTabController> {
               )
             ],
           ),
-          body: TabBarView(children: [
+          body: sharedState.isProcessing.value == true
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(children: [
             Column(
               children: <Widget>[
                 ListTile(

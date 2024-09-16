@@ -112,4 +112,22 @@ class TranscriptionApiService {
 
     return true;
   }
+
+  Future getTranscriptions(String fileId) async {
+    final url = Uri.parse('$baseUrl/files/$fileId/transcriptions');
+    final session = await authService.getToken();
+    final token = session['auth_token'];
+
+    final response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      }
+    );
+
+    if (response.statusCode == 200) {
+      print(response.body);
+    }
+  }
 }

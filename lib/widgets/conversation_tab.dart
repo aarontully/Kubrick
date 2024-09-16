@@ -31,17 +31,19 @@ class _ConversationTabState extends State<ConversationTab> {
   void initState() {
     super.initState();
 
-    transcription = widget.recording.transcription!;
-    metadata = transcription!['data']['transcription']['result']['metadata'];
+    if (widget.recording.transcription != null) {
+      transcription = widget.recording.transcription!;
+      metadata = transcription!['data']['transcription']['result']['metadata'];
 
-    utterances = transcription!['data']['transcription']['result']['results']['utterances'];
+      utterances = transcription!['data']['transcription']['result']['results']['utterances'];
 
-    if (metadata != null && widget.recording.speakers.isEmpty) {
-      speakers = metadata!['speakers'];
-    } else if (widget.recording.speakers.isNotEmpty) {
-      speakers = widget.recording.speakers;
-    } else {
-      print('Speakers or metadata not found');
+      if (metadata != null && widget.recording.speakers.isEmpty) {
+        speakers = metadata!['speakers'];
+      } else if (widget.recording.speakers.isNotEmpty) {
+        speakers = widget.recording.speakers;
+      } else {
+        print('Speakers or metadata not found');
+      }
     }
   }
 
@@ -80,7 +82,8 @@ class _ConversationTabState extends State<ConversationTab> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Stack(
+      child: widget.recording.transcription != null
+        ? Stack(
         children: [
           SelectionArea(
             child: Padding(
@@ -244,6 +247,9 @@ class _ConversationTabState extends State<ConversationTab> {
             )
           ),
         ],
+      )
+      : const Center(
+        child: Text('No transcription available'),
       ),
     );
   }

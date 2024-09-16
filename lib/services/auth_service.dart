@@ -72,9 +72,9 @@ class AuthService {
 
     final expiresAt = DateTime.parse(expiresAtStr);
     if (DateTime.now().isAfter(expiresAt)) {
-      Get.off(() => const LoginScreen());
+      Get.to(() => const LoginScreen());
     } else {
-      Get.off(() => const HomeScreen());
+      Get.to(() => const HomeScreen());
     }
   }
 

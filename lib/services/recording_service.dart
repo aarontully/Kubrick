@@ -39,12 +39,14 @@ class RecordingService {
     if (path != null) {
       DateTime now = DateTime.now();
       String fileName = p.basename(path);
+      String userId = sharedState.currentUser.value;
 
       Recording recording = Recording(
         path: path,
         createdAt: now,
         name: fileName,
         metadata: metadata,
+        user_id: userId,
       );
 
       sharedState.currentRecording.value = recording;

@@ -11,17 +11,17 @@ class Recording extends GetxController {
   RxString status = ''.obs;
   Rx<Metadata> metadata = Metadata().obs;
   List<dynamic> speakers = [];
-  RxString userId = ''.obs;
+  RxString user_id = ''.obs;
 
   Recording({required String path, required DateTime createdAt, required String name,
-  String status = 'Not Uploaded', this.uploadId, this.transcriptionId, this.transcription, Metadata? metadata, List<dynamic>? speakers, String? userId}) {
+  String status = 'Not Uploaded', this.uploadId, this.transcriptionId, this.transcription, Metadata? metadata, List<dynamic>? speakers, String? user_id}) {
     this.path.value = path;
     this.createdAt.value = createdAt;
     this.name.value = name;
     this.status.value = status;
     this.metadata.value = metadata ?? this.metadata.value;
     this.speakers = speakers ?? [];
-    this.userId.value = userId ?? '';
+    this.user_id.value = user_id ?? '';
   }
 
   Map<String, dynamic> toMap() {
@@ -35,7 +35,7 @@ class Recording extends GetxController {
       'transcription':  transcription,
       'metadata': metadata.value.toMap(),
       'speakers': speakers,
-      'userId': userId.value,
+      'user_id': user_id.value,
     };
   }
 
@@ -50,7 +50,7 @@ class Recording extends GetxController {
       transcription: map['transcription'],
       metadata: Metadata.fromMap(map['metadata'] as Map<String, dynamic>),
       speakers: map['speakers'] as List<dynamic>?,
-      userId: map['userId'],
+      user_id: map['user_id'],
     );
   }
 }

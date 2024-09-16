@@ -23,7 +23,6 @@ class MetadataController extends GetxController {
     'INDY',
     'KARIN',
     'LAURA',
-    'PAUL',
     'RICHARD',
     'BEN',
     'ZEN',

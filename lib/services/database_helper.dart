@@ -37,14 +37,17 @@ class DatabaseHelper {
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
-            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT, user_id TEXT)",
+            "CREATE TABLE $tableRecordings (id INTEGER PRIMARY KEY, path TEXT, createdAt TEXT, name TEXT, status TEXT, uploadId TEXT, transcriptionId TEXT, transcription TEXT, metadata TEXT,speakers TEXT, user_id TEXT)",
           );
         });
       },
       onUpgrade: (db, oldVersion, newVersion) {
         if (oldVersion < 15) { // version 0.1.5
           db.execute(
-            "ALTER TABLE $tableRecordings ADD COLUMN speakers TEXT, ADD COLUMN user_id TEXT",
+            "ALTER TABLE $tableRecordings ADD COLUMN speakers TEXT",
+          );
+          db.execute(
+            "ALTER TABLE $tableRecordings ADD COLUMN user_id TEXT",
           );
         }
       },
@@ -66,17 +69,14 @@ class DatabaseHelper {
         ..['speakers'] = speakersJson,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-
-    await db.close();
   }
 
   static Future<List<Recording>> getRecordings() async {
+    final db = await initDatabase();
     SharedState sharedState = Get.find<SharedState>();
     String userId = sharedState.currentUser.value;
-    final db = await initDatabase();
-    final List<Map<String, dynamic>> maps = await db.query(tableRecordings, where: 'user_id = ?', whereArgs: [userId]);
 
-    await db.close();
+    final List<Map<String, dynamic>> maps = await db.query(tableRecordings, where: 'user_id = ?', whereArgs: [userId]);
 
     return List.generate(maps.length, (index) {
       final transcription = jsonDecode(maps[index]['transcription']);
@@ -95,7 +95,7 @@ class DatabaseHelper {
         transcriptionId: maps[index]['transcriptionId'],
         metadata: metadata,
         speakers: speakers,
-        userId: maps[index]['user_id'],
+        user_id: maps[index]['user_id'],
       );
     });
   }
@@ -132,6 +132,8 @@ class DatabaseHelper {
       where: 'path = ?',
       whereArgs: [recording.path.value],
     );
+
+    print('Local recording deleted: ${recording.path.value}');
 
     await db.close();
   }
