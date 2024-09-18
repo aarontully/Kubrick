@@ -38,16 +38,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     sharedState.checkConnectivity();
     PermissionChecker.requestPermissions().then((_) async {
-      var userId = await authService.getUserId();
-      sharedState.setUser(userId);
       Get.find<RecordingsController>().fetchRecordings();
     });
-    SyncService().syncRecordings();
+    //SyncService().syncRecordings();
   }
 
   @override
   void dispose() {
     super.dispose();
+    Get.find<RecordingsController>().recordings.clear();
   }
 
   Future startRecording() async {

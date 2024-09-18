@@ -1,10 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/auth_service.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:yaml/yaml.dart';
@@ -73,8 +72,9 @@ class DatabaseHelper {
 
   static Future<List<Recording>> getRecordings() async {
     final db = await initDatabase();
-    SharedState sharedState = Get.find<SharedState>();
-    String userId = sharedState.currentUser.value;
+    final userId = await AuthService().getUserId();
+
+    print('Fetching recordings for user: $userId');
 
     final List<Map<String, dynamic>> maps = await db.query(tableRecordings, where: 'user_id = ?', whereArgs: [userId]);
 

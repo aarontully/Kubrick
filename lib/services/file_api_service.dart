@@ -26,9 +26,9 @@ class FileApiService {
     final token = await fetchToken();
     final url = Uri.parse('$baseUrl/files');
 
-    String userId = sharedState.currentUser.value;
+    String userId = await AuthService().getUserId();
     final queryParams = {
-      'where': jsonEncode({'uploader_id': userId}),
+      'filter[uploader_id]': userId,
     };
 
     final uri = url.replace(queryParameters: queryParams);
@@ -43,6 +43,9 @@ class FileApiService {
 
     if(response.statusCode == 200) {
       final Map<String, dynamic> responseBody = jsonDecode(response.body);
+      print('********************************');
+      print(responseBody['data']['files']);
+      print('********************************');
       return responseBody['data']['files'];
     } else {
       return [];
@@ -203,9 +206,10 @@ class FileApiService {
   }
 
   // GET: /files/{file_id}/download
-  Future<String> downloadFile(String fileId) async {
+  Future<String> downloadFile(Recording recording) async {
     final token = await fetchToken();
-    final url = Uri.parse('$baseUrl/files/$fileId/download');
+    final url = Uri.parse('$baseUrl/files/${recording.uploadId}/download');
+
     final response = await http.get(
       url,
       headers: <String, String> {
@@ -215,10 +219,18 @@ class FileApiService {
     );
 
     if(response.statusCode == 200) {
-      String transcript = String.fromCharCodes(response.bodyBytes);
-      return transcript;
+      final metadata = recording.metadata.value;
+      String hours = metadata.timecode.hour.toString().padLeft(2, '0');
+      String minutes = metadata.timecode.minute.toString().padLeft(2, '0');
+
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/${metadata.shoot_day}_${metadata.interview_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}.m4a';
+
+      final file = File(filePath);
+      await file.writeAsBytes(response.bodyBytes);
+      return filePath;
     } else {
-      throw Exception('Failed to download file');
+      throw Exception('Failed to download file}');
     }
   }
 }

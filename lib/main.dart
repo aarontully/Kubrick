@@ -7,12 +7,10 @@ import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/screens/home_screen.dart';
 import 'package:kubrick/screens/login_screen.dart';
 import 'package:kubrick/screens/splash_screen.dart';
-import 'package:kubrick/services/auth_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
-  AuthService authService = AuthService();
 
   Get.put(SharedState());
   Get.put(RecordingsController());
@@ -56,7 +54,7 @@ void main() {
           ),
         ),
       ),
-      home: SplashScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
       routes: {
         '/login': (context) => const LoginScreen(),

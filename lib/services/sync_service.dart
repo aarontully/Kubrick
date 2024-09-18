@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/file_api_service.dart';
@@ -8,8 +10,9 @@ import 'package:path/path.dart' as p;
 
 class SyncService {
   FileApiService fileApiService = FileApiService();
+  RecordingsController recordingsController = RecordingsController();
 
-  Future<List<Recording>> syncRecordings() async {
+  Future syncRecordings() async {
     final remoteRecordings = await fileApiService.getRemoteFiles();
     final localRecordings = await DatabaseHelper.getRecordings();
 
@@ -24,9 +27,12 @@ class SyncService {
         // need to download file from remote db
         print('Downloading file from remote db');
         final fetchedFile = await fileApiService.getFileInfo(remoteRecording['id']);
-        await TranscriptionApiService().getTranscriptions(fetchedFile.uploadId!);
-        fetchedFile.status.value = 'Uploaded';
+        await TranscriptionApiService().getAllTranscriptions(fetchedFile);
         await DatabaseHelper.insertRecording(fetchedFile);
+        final returnedPath = await fileApiService.downloadFile(fetchedFile);
+        fetchedFile.path.value = returnedPath;
+        fetchedFile.status.value = 'Uploaded';
+        await DatabaseHelper.updateRecording(fetchedFile);
       } else {
         // Remote recording exists locally
         print('Remote recording exists locally...doing nothing');
@@ -41,20 +47,23 @@ class SyncService {
         // need to upload file to remote db
 
         final file = File(localRecording.path.value);
-        final fileSize = await file.length();
-        const chunkSize = 1024 * 1024; //1MB
-        final chunkCount = (fileSize / chunkSize).ceil();
-        final fileName = p.basename(localRecording.path.value);
 
-        await fileApiService.initUpload(chunkCount, fileName, chunkSize,localRecording);
+      if( await file.exists()) {
+          final file = File(localRecording.path.value);
+          final fileSize = await file.length();
+          const chunkSize = 1024 * 1024; //1MB
+          final chunkCount = (fileSize / chunkSize).ceil();
+          final fileName = p.basename(localRecording.path.value);
+
+          await fileApiService.initUpload(chunkCount, fileName, chunkSize,localRecording);
+        }
       } else {
         // Local recording exists remotely
         print('Local recording exists remotely...doing nothing');
       }
     }
 
-    final updatedLocalRecordings = await DatabaseHelper.getRecordings();
-
-    return updatedLocalRecordings;
+    recordingsController.fetchRecordings();
+    print('Sync complete');
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/auth_service.dart';
+import 'package:kubrick/services/database_helper.dart';
 
 class TranscriptionApiService {
   final String baseUrl = 'https://transcription.staging.endemolshine.com.au/api/v1';
@@ -113,8 +115,8 @@ class TranscriptionApiService {
     return true;
   }
 
-  Future getTranscriptions(String fileId) async {
-    final url = Uri.parse('$baseUrl/files/$fileId/transcriptions');
+  Future getAllTranscriptions(Recording recording) async {
+    final url = Uri.parse('$baseUrl/files/${recording.uploadId}/transcriptions');
     final session = await authService.getToken();
     final token = session['auth_token'];
 
@@ -128,6 +130,32 @@ class TranscriptionApiService {
 
     if (response.statusCode == 200) {
       print(response.body);
+      final responseBody = jsonDecode(response.body);
+      final transcriptionList = responseBody['data']['transcriptions'];
+      for (final transcription in transcriptionList) {
+        final recordingTranscript = await getTranscription(recording.uploadId!, transcription['id']);
+        recording.transcription = recordingTranscript;
+        await DatabaseHelper.updateRecording(recording);
+      }
+    }
+  }
+
+  Future getTranscription(String fileId, String transcriptionId) async {
+    final url = Uri.parse('$baseUrl/files/$fileId/transcriptions/$transcriptionId');
+    final session = await authService.getToken();
+    final token = session['auth_token'];
+
+    final response = await http.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      }
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      return responseBody;
     }
   }
 }

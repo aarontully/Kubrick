@@ -109,7 +109,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                   },
                   onSelected: (value) async {
                     if (value == 'downloadAudio') {
-                      fileApiService.downloadFile(widget.recording.uploadId!);
+                      //fileApiService.downloadFile(widget.recording.uploadId!);
                     }
                     if (value == 'downloadTranscription') {
                       final transcription =

@@ -58,12 +58,18 @@ class _PlayerWidgetState extends State<PlayerWidget> {
       volume: 1.0,
     );
 
-    setState(() {
-      waveFormData = waveFormData;
-    });
+    if (mounted) {
+      setState(() {
+        waveFormData = waveFormData;
+      });
+    }
   }
 
-  void updateIcon() => setState(() {});
+  void updateIcon() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void dispose() {

@@ -13,6 +13,7 @@ class RecordingsController extends GetxController {
 
   Future fetchRecordings() async {
     List<Recording> fetchedRecordings = await DatabaseHelper.getRecordings();
+    //SyncService().syncRecordings();
     if (fetchedRecordings.isNotEmpty) {
       recordings.clear();
       recordings.addAll(fetchedRecordings);

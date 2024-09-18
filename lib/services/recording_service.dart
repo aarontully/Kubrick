@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/auth_service.dart';
 import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
@@ -39,7 +40,8 @@ class RecordingService {
     if (path != null) {
       DateTime now = DateTime.now();
       String fileName = p.basename(path);
-      String userId = sharedState.currentUser.value;
+      AuthService authService = AuthService();
+      String userId = await authService.getUserId();
 
       Recording recording = Recording(
         path: path,

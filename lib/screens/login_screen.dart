@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kubrick/controllers/recording_controller.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/screens/home_screen.dart';
 import 'package:kubrick/services/auth_service.dart';
 
@@ -14,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+  final RecordingsController recordingsController = Get.find<RecordingsController>();
   bool isObscure = true;
 
   void login() async {
@@ -37,6 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       await _authService.storeToken(token!, DateTime.parse(expiry!), userId!);
+
+      await recordingsController.fetchRecordings();
+
       Get.off(() => const HomeScreen());
       print('Navigated to HomeScreen');
     } catch (e) {

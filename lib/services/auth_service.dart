@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:kubrick/screens/home_screen.dart';
+import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/screens/login_screen.dart';
 
 class AuthService {
@@ -61,26 +61,13 @@ class AuthService {
     return sessionData['user_id'] ?? '';
   }
 
-  /* Future<void> checkToken() async {
-    final sessionData = await getToken();
-    final token = sessionData['auth_token'];
-    final expiresAtStr = sessionData['expires_at'];
-    if (token == null || expiresAtStr == null) {
-      Get.off(() => const LoginScreen());
-      return;
-    }
-
-    final expiresAt = DateTime.parse(expiresAtStr);
-    if (DateTime.now().isAfter(expiresAt)) {
-      navigator.push(() => const LoginScreen());
-      Get.to(() => const LoginScreen());
-    } else {
-      Get.to(() => const HomeScreen());
-    }
-  } */
-
   Future<void> logout() async {
-    await storage.deleteAll();
+    print('Logged out');
+    await storage.delete(key: 'auth_token');
+    await storage.delete(key: 'expires_at');
+    await storage.delete(key: 'user_id');
+    print('Remaining in storage: ${await storage.readAll()}');
+    Get.find<RecordingsController>().recordings.clear();
     Get.off(() => const LoginScreen());
   }
 }

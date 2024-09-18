@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/get_instance.dart';
 import 'package:intl/intl.dart';
@@ -35,24 +36,41 @@ class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: sharedState.isLoading.value && widget.recording.path.value == sharedState.currentPath.value
-      ? const Center(
-        child: SizedBox(
-          width: 300,
-          height: 300,
-          child: LoadingIndicator(
-            indicatorType: Indicator.ballClipRotateMultiple,
-            colors: [Color(0xFFE4E4E4)],
+      body: Obx(() {
+      if (sharedState.isLoading.value) {
+        return const Center(
+          child: SizedBox(
+            width: 300,
+            height: 300,
+            child: LoadingIndicator(
+              indicatorType: Indicator.ballClipRotateMultiple,
+              colors: [Color(0xFFE4E4E4)],
+            ),
           ),
-        ),
-      )
-      : InfoTabController(
-        createdAt: formatDate(widget.recording.transcription?['data']['transcription']['completed_at'] ?? 'No date'),
-        duration: formatDuration(widget.recording.transcription?['data']['transcription']['result']['metadata']['duration'] ?? 0.0),
-        summary: widget.recording.transcription?['data']['transcription']['result']['results']['summary']['short'] ?? 'No summary',
-        transcription: widget.recording.transcription?['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'] ?? [],
-        recording: widget.recording,
-      )
+        );
+      } else if (widget.recording.transcription?['data']['transcription']['status'] == 'error') {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Error: ${widget.recording.transcription?['data']['transcription']['error']}'),
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                child: const Text('Go back'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        return InfoTabController(
+          createdAt: formatDate(widget.recording.transcription?['data']['transcription']['completed_at'] ?? 'No date'),
+          duration: formatDuration(widget.recording.transcription?['data']['transcription']['result']['metadata']['duration'] ?? 0.0),
+          summary: widget.recording.transcription?['data']['transcription']['result']['results']['summary']['short'] ?? 'No summary',
+          transcription: widget.recording.transcription?['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'] ?? [],
+          recording: widget.recording,
+        );
+      }
+      }),
     );
   }
 }
