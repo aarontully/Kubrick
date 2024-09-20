@@ -9,7 +9,7 @@ class SharedState extends GetxController {
   RxBool isProcessing = false.obs;
   RxBool isConnected = false.obs;
   RxDouble uploadProgress = 0.0.obs;
-  Rx<Recording?> currentRecording = Rx<Recording?>(null);
+  RxString currentRecording = ''.obs;
   RxBool isSentenceSentiment = false.obs;
   RxBool isWordConfidence = true.obs;
   RxString currentUser = ''.obs;
@@ -25,6 +25,10 @@ class SharedState extends GetxController {
   void setProcessing(bool value) {
     isProcessing.value = value;
     update();
+  }
+
+  void setCurrentRecording(String value) {
+    currentRecording.value = value;
   }
 
   void setUploadProgress(double value) {

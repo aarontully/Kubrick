@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
+import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/file_api_service.dart';
@@ -26,13 +26,24 @@ class SyncService {
         // Remote recording does not exist locally
         // need to download file from remote db
         print('Downloading file from remote db');
-        final fetchedFile = await fileApiService.getFileInfo(remoteRecording['id']);
-        await TranscriptionApiService().getAllTranscriptions(fetchedFile);
-        await DatabaseHelper.insertRecording(fetchedFile);
-        final returnedPath = await fileApiService.downloadFile(fetchedFile);
-        fetchedFile.path.value = returnedPath;
-        fetchedFile.status.value = 'Uploaded';
-        await DatabaseHelper.updateRecording(fetchedFile);
+
+        Recording newRecording = Recording(
+          path: '',
+          name: remoteRecording['name'],
+          uploadId: remoteRecording['id'],
+          createdAt: DateTime.parse(remoteRecording['created_at']),
+          user_id: remoteRecording['uploader_id'],
+        );
+
+        newRecording.metadata.value = remoteRecording['metadata'] != null ? Metadata.fromMap(remoteRecording['metadata']) : Metadata();
+        String returnedPath = await fileApiService.downloadFile(newRecording);
+        newRecording.path.value = returnedPath;
+        await TranscriptionApiService().getAllTranscriptions(newRecording);
+
+        newRecording.status.value = 'Uploaded';
+
+        //final fetchedFile = await fileApiService.getFileInfo(remoteRecording['id']);
+        await DatabaseHelper.insertRecording(newRecording);
       } else {
         // Remote recording exists locally
         print('Remote recording exists locally...doing nothing');
@@ -45,6 +56,7 @@ class SyncService {
       if (remoteRecording == null) {
         // Local recording does not exist remotely
         // need to upload file to remote db
+        print('Uploading file to remote db');
 
         final file = File(localRecording.path.value);
 
@@ -56,14 +68,13 @@ class SyncService {
           final fileName = p.basename(localRecording.path.value);
 
           await fileApiService.initUpload(chunkCount, fileName, chunkSize,localRecording);
+          print('Upload to remote db complete');
         }
       } else {
         // Local recording exists remotely
         print('Local recording exists remotely...doing nothing');
       }
     }
-
-    recordingsController.fetchRecordings();
     print('Sync complete');
   }
 }

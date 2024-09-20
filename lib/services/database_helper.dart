@@ -29,10 +29,10 @@ class DatabaseHelper {
   }
 
   static Future<Database> initDatabase() async {
-    final version = await getAppVersion();
+    //final version = await getAppVersion();
     return openDatabase(
       join(await getDatabasesPath(), databaseName),
-      version: version,
+      version: 1,
       onCreate: (db, version) {
         return db.transaction((txn) async {
           await txn.execute(
@@ -40,7 +40,7 @@ class DatabaseHelper {
           );
         });
       },
-      onUpgrade: (db, oldVersion, newVersion) {
+      /* onUpgrade: (db, oldVersion, newVersion) {
         if (oldVersion < 15) { // version 0.1.5
           db.execute(
             "ALTER TABLE $tableRecordings ADD COLUMN speakers TEXT",
@@ -49,7 +49,7 @@ class DatabaseHelper {
             "ALTER TABLE $tableRecordings ADD COLUMN user_id TEXT",
           );
         }
-      },
+      }, */
     );
   }
 
@@ -68,6 +68,8 @@ class DatabaseHelper {
         ..['speakers'] = speakersJson,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+
+    await db.close();
   }
 
   static Future<List<Recording>> getRecordings() async {
@@ -77,6 +79,8 @@ class DatabaseHelper {
     print('Fetching recordings for user: $userId');
 
     final List<Map<String, dynamic>> maps = await db.query(tableRecordings, where: 'user_id = ?', whereArgs: [userId]);
+
+    await db.close();
 
     return List.generate(maps.length, (index) {
       final transcription = jsonDecode(maps[index]['transcription']);

@@ -151,7 +151,16 @@ class _InfoTabControllerState extends State<InfoTabController> {
                         sharedState.setProcessing(false);
                       } catch (e) {
                         print('Failed to reprocess recording: $e');
-                        sharedState.setProcessing(false);
+                        Get.snackbar(
+                          'Failed to re-process',
+                          'Please check network status and try again',
+                          colorText: Colors.white,
+                          backgroundColor: Colors.red
+                        );
+                        setState(() {
+                          sharedState.setProcessing(false);
+                          sharedState.setCurrentRecording('');
+                        });
                       }
                     }
                     if (value == 'wordConfidence') {

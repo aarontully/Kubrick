@@ -43,9 +43,6 @@ class FileApiService {
 
     if(response.statusCode == 200) {
       final Map<String, dynamic> responseBody = jsonDecode(response.body);
-      print('********************************');
-      print(responseBody['data']['files']);
-      print('********************************');
       return responseBody['data']['files'];
     } else {
       return [];
@@ -186,7 +183,6 @@ class FileApiService {
 
     if(response.statusCode != 200) {
       print('Status code: ${response.statusCode}. Response: ${response.body}');
-      throw Exception('Failed to delete file');
     } else {
       print('Remote file deleted: $fileId');
     }

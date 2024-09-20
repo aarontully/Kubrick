@@ -28,17 +28,17 @@ class _PlayerWidgetState extends State<PlayerWidget> {
   @override
   void initState() {
     super.initState();
-    if (widget.recording.transcription != null) {
       _initialize();
       controller.onCurrentDurationChanged.listen((event) {
         setState(() {
           currentPosition = event;
         });
       });
-      sentences = (widget.recording.transcription!['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'][0]['sentences'] as List)
-      .map((sentence) => Sentence.fromMap(sentence))
-      .toList();
-    }
+    if(widget.recording.transcription != null) {
+        sentences = (widget.recording.transcription!['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'][0]['sentences'] as List)
+        .map((sentence) => Sentence.fromMap(sentence))
+        .toList();
+      }
   }
 
   Future<void> _initialize() async {
@@ -79,11 +79,6 @@ class _PlayerWidgetState extends State<PlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.recording.transcription == null) {
-      return const Center(
-        child: Text('No data available'),
-      );
-    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[

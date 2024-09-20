@@ -64,8 +64,12 @@ class RecordingList extends StatelessWidget {
           },
           onDismissed: (direction) async {
             var fileApiService = FileApiService();
-            await DatabaseHelper.deleteRecording(recording);
-            await fileApiService.deleteFile(recording.uploadId!);
+            if(recording.status.value == 'Uploaded') {
+              await fileApiService.deleteFile(recording.uploadId!);
+              await DatabaseHelper.deleteRecording(recording);
+            } else {
+              await DatabaseHelper.deleteRecording(recording);
+            }
             recordings.removeAt(index);
             Get.find<RecordingsController>().update();
           },

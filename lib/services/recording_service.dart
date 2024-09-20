@@ -10,14 +10,11 @@ import 'package:kubrick/services/file_api_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/transcription_api_service.dart';
 import 'package:kubrick/utils/chunk_transformer.dart';
-import 'package:uuid/uuid.dart';
 import 'package:path/path.dart' as p;
 
 import '../controllers/shared_state.dart';
 
 class RecordingService {
-  final Uuid uuid = const Uuid();
-  final DatabaseHelper databaseHelper = DatabaseHelper();
   final FileApiService apiService = FileApiService();
   final TranscriptionApiService transcriptionService =
       TranscriptionApiService();
@@ -49,14 +46,13 @@ class RecordingService {
         name: fileName,
         metadata: metadata,
         user_id: userId,
+        status: 'Local',
       );
 
-      sharedState.currentRecording.value = recording;
+      sharedState.setCurrentRecording(recording.path.value);
       sharedState.setUploadProgress(0.3);
 
       await DatabaseHelper.insertRecording(recording);
-
-      Get.find<RecordingsController>().recordings.add(recording);
       Get.find<RecordingsController>().fetchRecordings();
 
       sharedState.setUploadProgress(0.4);
@@ -68,19 +64,13 @@ class RecordingService {
         final response = await transcribeRecording(recording);
         if (response) {
           recording.status.value = 'Uploaded';
-        } else {
-          recording.status.value = 'Local';
+          await DatabaseHelper.updateRecording(recording);
         }
-      } else {
-        recording.status.value = 'Local';
       }
-
-      recording.status.refresh();
-      await DatabaseHelper.updateRecording(recording);
 
       sharedState.setUploadProgress(0.10);
       sharedState.setProcessing(false);
-      sharedState.currentRecording.value = null;
+      sharedState.setCurrentRecording('');
       return recording;
     }
     return null;
@@ -93,13 +83,15 @@ class RecordingService {
     final chunkCount = (fileSize / chunkSize).ceil();
     final fileName = p.basename(recording.path.value);
 
-    sharedState.setUploadProgress(0.6);
+    sharedState.setUploadProgress(0.5);
 
     final uploadId =
         await apiService.initUpload(chunkCount, fileName, fileSize, recording);
     print('recording service $uploadId');
     recording.uploadId = uploadId;
     await DatabaseHelper.updateRecording(recording);
+
+    sharedState.setUploadProgress(0.6);
 
     // create a filestream for reading
     final fileStream = file.openRead();
@@ -133,13 +125,10 @@ class RecordingService {
       return true;
     } catch (e) {
       print('Failed to transcribe recording: $e');
+      sharedState.setUploadProgress(0.10);
+      sharedState.setProcessing(false);
+      sharedState.setCurrentRecording('');
       return false;
     }
-  }
-
-  Future restartRecording(Metadata metadata) async {
-    //await .stop();
-
-    //startRecording(metadata);
   }
 }

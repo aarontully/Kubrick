@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
 import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/services/auth_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/recording_service.dart';
 import 'package:kubrick/widgets/metadata_dialog.dart';
@@ -57,6 +58,9 @@ class FilePickerUtil {
         return;
       }
 
+      AuthService authService = AuthService();
+      String userId = await authService.getUserId();
+
       final createdDateTime = await file.lastModified();
 
       String hours = createdDateTime.hour.toString().padLeft(2, '0');
@@ -67,6 +71,7 @@ class FilePickerUtil {
         createdAt: createdDateTime,
         name: '${metadata.shoot_day}_${metadata.interview_day}_${metadata.contestant}_${metadata.camera}_${metadata.audio}_${hours}_${minutes}_${metadata.producer}$ext',
         metadata: metadata,
+        user_id: userId,
       );
 
       sharedState.setUploadProgress(0.3);

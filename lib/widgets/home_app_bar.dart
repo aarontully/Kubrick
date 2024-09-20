@@ -89,30 +89,27 @@ class _HomeAppBarState extends State<HomeAppBar> {
             } else {
               setState(() {
                 selectedSortOption = result;
-                sortRecordings(result);
               });
+              sortRecordings(result);
             }
           },
           itemBuilder: (context) => [
             PopupMenuItem<String>(
-              value: 'Sort By',
-              child: PopupMenuButton<String>(
-                onSelected: (value) {
-                  setState(() {
-                    selectedSortOption = value;
-                    sortRecordings(value);
-                  });
-                },
-                itemBuilder: (BuildContext context) => sortOptions.map((String option) {
-                    return PopupMenuItem<String>(
-                      value: option,
-                      child: Text(option),
-                    );
-                  }).toList(),
-                  child: const Text('Sort By'),
+              value: selectedSortOption,
+              child: Row(
+                children: [
+                  Text(selectedSortOption),
+                  const Icon(Icons.arrow_drop_down_rounded),
+                ],
               ),
             ),
             const PopupMenuDivider(),
+            ...sortOptions.where((option) => option != selectedSortOption).map((option) {
+              return PopupMenuItem<String>(
+                value: option,
+                child: Text(option),
+              );
+            }).toList(),
             const PopupMenuItem<String>(
               value: 'Sign Out',
               child: Text('Sign Out'),

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
@@ -10,7 +9,6 @@ import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/auth_service.dart';
 import 'package:kubrick/services/database_helper.dart';
 import 'package:kubrick/services/recording_service.dart';
-import 'package:kubrick/services/sync_service.dart';
 import 'package:kubrick/utils/file_picker_util.dart';
 import 'package:kubrick/utils/permission_checker.dart';
 import 'package:kubrick/widgets/home_app_bar.dart';
@@ -40,7 +38,6 @@ class _HomeScreenState extends State<HomeScreen> {
     PermissionChecker.requestPermissions().then((_) async {
       Get.find<RecordingsController>().fetchRecordings();
     });
-    //SyncService().syncRecordings();
   }
 
   @override
@@ -87,8 +84,23 @@ class _HomeScreenState extends State<HomeScreen> {
         print('Server connection failed, but the recording was saved locally.');
       }
     }
-
     Get.find<RecordingsController>().fetchRecordings();
+  }
+
+  Future restartRecording() async {
+    await controller.stop();
+    if (metadata != null) {
+      try {
+        String hours = metadata!.timecode.hour.toString().padLeft(2, '0');
+        String minutes = metadata!.timecode.minute.toString().padLeft(2, '0');
+        Directory directory = await getApplicationDocumentsDirectory();
+        String path = '${directory.path}/${metadata!.shoot_day}_${metadata!.interview_day}_${metadata!.contestant}_${metadata!.camera}_${metadata!.audio}_${hours}_${minutes}_${metadata!.producer}.m4a';
+        await controller.record(path: path);
+        sharedState.setRecording(true);
+      } catch (e) {
+        print(e);
+      }
+    }
   }
 
   @override
@@ -100,17 +112,22 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Column(
           children: <Widget>[
             Expanded(
-                child: RecordingList(
-              recordings: recordingsController.recordings,
-              onPlay: (Recording recording) {
-                print(recording.transcription);
-              },
-              onDelete: (Recording recording) {
-                DatabaseHelper.deleteRecording(recording);
-                recordingsController.recordings.remove(recording);
-                setState(() {});
-              },
-            )),
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await recordingsController.fetchRecordings();
+                  },
+                  child: RecordingList(
+                                recordings: recordingsController.recordings,
+                                onPlay: (Recording recording) {
+                  print(recording.transcription);
+                                },
+                                onDelete: (Recording recording) {
+                  DatabaseHelper.deleteRecording(recording);
+                  recordingsController.recordings.remove(recording);
+                  setState(() {});
+                                },
+                              ),
+                )),
             Center(
               child: Container(
                 margin: const EdgeInsets.all(40),
@@ -144,16 +161,33 @@ class _HomeScreenState extends State<HomeScreen> {
                               alignment: Alignment.centerLeft,
                               child: ElevatedButton(
                                 onPressed: () async {
-                                  await recordingService.restartRecording(metadata!);
-                                  final snackbar = SnackBar(
-                                    elevation: 0,
-                                    behavior: SnackBarBehavior.floating,
-                                    backgroundColor: Colors.transparent,
-                                    content: AwesomeSnackbarContent(title: 'Restarted', message: 'The recording has now restarted', contentType: ContentType.success),
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Confirm Restart'),
+                                      content: const Text('Are you sure you want to restart the recording?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                            await restartRecording();
+                                            Get.snackbar(
+                                              'Recording restarted',
+                                              'The recording has been restarted.',
+                                              snackPosition: SnackPosition.TOP,
+                                              colorText: Colors.white,
+                                              backgroundColor: Colors.green,
+                                            );
+                                          },
+                                          child: const Text('Restart'),
+                                        ),
+                                      ],
+                                    ),
                                   );
-                                  ScaffoldMessenger.of(context)
-                                    ..hideCurrentSnackBar()
-                                    ..showSnackBar(snackbar);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   shape: const CircleBorder(),
@@ -199,20 +233,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           flex: 1,
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: ElevatedButton(
-                                onPressed: () async {
-                                  await FilePickerUtil.pickAndSaveFile(context);
-                                  recordingsController.fetchRecordings();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(10),
-                                  iconColor: Colors.grey[100],
-                                ),
-                                child: const Icon(
-                                  Icons.add,
-                                  size: 20,
-                                )),
+                            child: Visibility(
+                              visible: sharedState.isRecording.value == false,
+                              child: ElevatedButton(
+                                  onPressed: () async {
+                                    await FilePickerUtil.pickAndSaveFile(context);
+                                    recordingsController.fetchRecordings();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    shape: const CircleBorder(),
+                                    padding: const EdgeInsets.all(10),
+                                    iconColor: Colors.grey[100],
+                                  ),
+                                  child: const Icon(
+                                    Icons.add,
+                                    size: 20,
+                                  )),
+                            ),
                           ),
                         )
                       ],

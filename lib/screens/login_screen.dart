@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
-import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/screens/home_screen.dart';
 import 'package:kubrick/services/auth_service.dart';
 
