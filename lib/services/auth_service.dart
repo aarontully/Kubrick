@@ -11,7 +11,6 @@ class AuthService {
   final storage = const FlutterSecureStorage(
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
-  //SharedState sharedState = Get.find<SharedState>();
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
@@ -34,12 +33,12 @@ class AuthService {
     }
   }
 
-  Future<void> storeToken(String token, DateTime expiresAt, String userId) async {
+  Future<void> storeToken(String token, DateTime expiresAt, String userId, String email) async {
     try {
       await storage.write(key: 'auth_token', value: token);
       await storage.write(key: 'expires_at', value: expiresAt.toIso8601String());
       await storage.write(key: 'user_id', value: userId);
-      print('Token stored: $token, It will expire on: $expiresAt for user: $userId');
+      await storage.write(key: 'email', value: email);
     } catch (e) {
       print('Error: $e');
     }
@@ -48,7 +47,6 @@ class AuthService {
   Future<Map<String?, String?>> getToken() async {
     try {
       final session = await storage.readAll();
-      print('Token fetched: ${session['auth_token']}, It will expire on: ${session['expires_at']}');
       return session;
     } catch (e) {
       print('Error in get token: $e');
@@ -61,12 +59,17 @@ class AuthService {
     return sessionData['user_id'] ?? '';
   }
 
+  Future<String> getEmail() async {
+    final sessionData = await getToken();
+    return sessionData['email'] ?? '';
+  }
+
   Future<void> logout() async {
     print('Logged out');
     await storage.delete(key: 'auth_token');
     await storage.delete(key: 'expires_at');
     await storage.delete(key: 'user_id');
-    print('Remaining in storage: ${await storage.readAll()}');
+    await storage.delete(key: 'email');
     Get.find<RecordingsController>().recordings.clear();
     Get.off(() => const LoginScreen());
   }

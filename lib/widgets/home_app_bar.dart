@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/services/auth_service.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -15,8 +16,10 @@ class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _HomeAppBarState extends State<HomeAppBar> {
   AuthService authService = AuthService();
+  SharedState sharedState = Get.find<SharedState>();
 
   String selectedSortOption = 'Newest-Oldest';
+  String? username;
 
   final List<String> sortOptions = [
     'A-Z/1-9',
@@ -32,6 +35,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
     'Interview Day A-Z',
     'Interview Day Z-A',
   ];
+
+  final GlobalKey filterButtonKey = GlobalKey();
 
   void sortRecordings(String value) {
     var controller = Get.find<RecordingsController>();
@@ -77,46 +82,61 @@ class _HomeAppBarState extends State<HomeAppBar> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    authService.getEmail().then((value) {
+      setState(() {
+        username = value;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Kubrick Transcriber', overflow: TextOverflow.clip,),
-      actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.menu_rounded),
-          onSelected: (String result) {
-            if (result == 'Sign Out') {
-              authService.logout();
-            } else {
+      title: Row(
+        children: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.sort_rounded),
+            onSelected: (value) {
               setState(() {
-                selectedSortOption = result;
+                selectedSortOption = value;
+                sortRecordings(value);
               });
-              sortRecordings(result);
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem<String>(
-              value: selectedSortOption,
-              child: Row(
-                children: [
-                  Text(selectedSortOption),
-                  const Icon(Icons.arrow_drop_down_rounded),
-                ],
+            },
+            itemBuilder: (BuildContext context) {
+              return sortOptions
+                  .map((String option) => PopupMenuItem<String>(
+                        value: option,
+                        child: Text(option),
+                      ))
+                  .toList();
+            },
+          ),
+          const Spacer(),
+          const Text('Kubrick', overflow: TextOverflow.clip, textAlign: TextAlign.center),
+          const Spacer(),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu_rounded),
+            onSelected: (String result) {
+              if (result == 'Sign Out') {
+                authService.logout();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Text('Hi, ${username ?? ''}'),
               ),
-            ),
-            const PopupMenuDivider(),
-            ...sortOptions.where((option) => option != selectedSortOption).map((option) {
-              return PopupMenuItem<String>(
-                value: option,
-                child: Text(option),
-              );
-            }).toList(),
-            const PopupMenuItem<String>(
-              value: 'Sign Out',
-              child: Text('Sign Out'),
-            ),
-          ],
-        )
-      ],
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'Sign Out',
+                child: Text('Sign Out'),
+              )
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -142,7 +142,7 @@ class _InfoTabControllerState extends State<InfoTabController> {
                         sharedState.setProcessing(true);
                         RecordingService recordingService = RecordingService();
                         final response = await recordingService
-                            .transcribeRecording(widget.recording);
+                            .uploadRecording(widget.recording);
                         if (response) {
                           widget.recording.status.value = 'Uploaded';
                           await DatabaseHelper.updateRecording(

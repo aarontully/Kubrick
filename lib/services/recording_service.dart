@@ -61,7 +61,7 @@ class RecordingService {
       final isOnline = await hasNetwork();
 
       if (isOnline) {
-        final response = await transcribeRecording(recording);
+        final response = await uploadRecording(recording);
         if (response) {
           recording.status.value = 'Uploaded';
           await DatabaseHelper.updateRecording(recording);
@@ -76,7 +76,7 @@ class RecordingService {
     return null;
   }
 
-  Future<bool> transcribeRecording(Recording recording) async {
+  Future<bool> uploadRecording(Recording recording) async {
     final file = File(recording.path.value);
     final fileSize = await file.length();
     const chunkSize = 1024 * 1024; //1MB

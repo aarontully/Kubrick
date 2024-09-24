@@ -83,7 +83,7 @@ class FilePickerUtil {
       sharedState.setUploadProgress(0.4);
 
       final response =
-          await recordingService.transcribeRecording(addedRecording);
+          await recordingService.uploadRecording(addedRecording);
       if (response) {
         addedRecording.status.value = 'Uploaded';
       } else {

@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:kubrick/controllers/recording_controller.dart';
+import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/models/metadata_class.dart';
 import 'package:kubrick/models/recording_class.dart';
 import 'package:kubrick/services/database_helper.dart';
@@ -11,8 +13,15 @@ import 'package:path/path.dart' as p;
 class SyncService {
   FileApiService fileApiService = FileApiService();
   RecordingsController recordingsController = RecordingsController();
+  SharedState sharedState = Get.find<SharedState>();
 
   Future syncRecordings() async {
+    if(sharedState.isProcessing.value) {
+      return;
+    }
+
+    sharedState.setProcessing(true);
+
     final remoteRecordings = await fileApiService.getRemoteFiles();
     final localRecordings = await DatabaseHelper.getRecordings();
 
@@ -75,6 +84,8 @@ class SyncService {
         print('Local recording exists remotely...doing nothing');
       }
     }
+
+    sharedState.setProcessing(false);
     print('Sync complete');
   }
 }

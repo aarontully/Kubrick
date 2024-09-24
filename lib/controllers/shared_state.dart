@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:kubrick/models/recording_class.dart';
 
 class SharedState extends GetxController {
   RxBool isLoading = false.obs;

@@ -69,27 +69,27 @@ class _ConversationTabState extends State<ConversationTab> {
               padding: const EdgeInsets.only(top: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-              children: widget.transcription.expand<Widget>((paragraph) {
-                int paragraphSpeaker = paragraph['speaker'];
-                var sentences = paragraph['sentences'];
-                double paragraphStartTime = paragraph['start']; //2.1599998
-                final createdTime = metadata!['created']; //"2024-08-16T02:13:25.471Z"
-                int paragraphStartTimeMs = (paragraphStartTime * 1000).toInt();
-                DateTime createdDateTime = DateTime.parse(createdTime);
-                createdDateTime = createdDateTime.toLocal();
-                DateTime newDateTime = createdDateTime.add(Duration(milliseconds: paragraphStartTimeMs));
-                String formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(newDateTime);
-                List<Widget> widgets = [];
+                children: widget.transcription.expand<Widget>((paragraph) {
+                  int paragraphSpeaker = paragraph['speaker'];
+                  var sentences = paragraph['sentences'];
+                  double paragraphStartTime = paragraph['start']; //2.1599998
+                  final createdTime = metadata!['created']; //"2024-08-16T02:13:25.471Z"
+                  int paragraphStartTimeMs = (paragraphStartTime * 1000).toInt();
+                  DateTime createdDateTime = DateTime.parse(createdTime);
+                  createdDateTime = createdDateTime.toLocal();
+                  DateTime newDateTime = createdDateTime.add(Duration(milliseconds: paragraphStartTimeMs));
+                  String formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(newDateTime);
+                  List<Widget> widgets = [];
 
-                String speakerName = 'Unknown';
-                int speakerNumber = -1;
-                for (var speaker in speakers!) {
-                  if (speaker['number'] == paragraphSpeaker) {
-                    speakerName = speaker['name'];
-                    speakerNumber = speaker['number'];
-                    break;
+                  String speakerName = 'Unknown';
+                  int speakerNumber = -1;
+                  for (var speaker in speakers!) {
+                    if (speaker['number'] == paragraphSpeaker) {
+                      speakerName = speaker['name'];
+                      speakerNumber = speaker['number'];
+                      break;
+                    }
                   }
-                }
 
                 widgets.add(
                   Padding(
