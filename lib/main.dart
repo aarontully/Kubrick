@@ -7,9 +7,11 @@ import 'package:kubrick/controllers/shared_state.dart';
 import 'package:kubrick/screens/home_screen.dart';
 import 'package:kubrick/screens/login_screen.dart';
 import 'package:kubrick/screens/splash_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   HttpOverrides.global = MyHttpOverrides();
 
   Get.put(SharedState());

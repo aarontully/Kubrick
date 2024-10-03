@@ -34,8 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    sharedState.checkConnectivity();
-    PermissionChecker.requestPermissions().then((_) async {
+    //sharedState.checkConnectivity();
+    PermissionChecker().requestPermissions(context).then((_) async {
       Get.find<RecordingsController>().fetchRecordings();
     });
   }

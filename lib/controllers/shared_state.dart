@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+//import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SharedState extends GetxController {
   RxBool isLoading = false.obs;
@@ -51,7 +51,7 @@ class SharedState extends GetxController {
     currentUser.value = user;
   }
 
-  Future<bool> checkConnectivity() async {
+  /* Future<bool> checkConnectivity() async {
     try {
       final List<ConnectivityResult> connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.mobile) || connectivityResult.contains(ConnectivityResult.wifi)) {
@@ -65,5 +65,5 @@ class SharedState extends GetxController {
       print('Failed to check connectivity: $e');
       return false;
     }
-  }
+  } */
 }

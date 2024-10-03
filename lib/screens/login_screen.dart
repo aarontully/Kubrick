@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      await _authService.storeToken(token!, DateTime.parse(expiry!), userId!, email ?? '');
+      await _authService.storeToken(token!, DateTime.parse(expiry!), userId!, email);
 
       await recordingsController.fetchRecordings();
 
