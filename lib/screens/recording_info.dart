@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:kubrick/main.dart';
-import 'package:path/path.dart' as p;
+import 'package:kubrick/controllers/shared_state.dart';
+import 'package:kubrick/models/recording_class.dart';
+import 'package:kubrick/widgets/info_tab_controller.dart';
+import 'package:loading_indicator/loading_indicator.dart';
+
 
 class RecordingInfoScreen extends StatefulWidget {
   final Recording recording;
@@ -13,94 +16,59 @@ class RecordingInfoScreen extends StatefulWidget {
 }
 
 class _RecordingInfoScreenState extends State<RecordingInfoScreen> {
-  late AudioPlayer player;
-  late Stream<Duration> positionStream;
+  final sharedState = Get.find<SharedState>();
 
-  @override
-  void initState() {
-    super.initState();
-    player = AudioPlayer();
-    player.setFilePath(widget.recording.path!);
-    positionStream = player.positionStream;
+  String formatDuration(double durationInSeconds) {
+    int mins = (durationInSeconds / 60).floor();
+    double seconds = durationInSeconds % 60;
+    return '$mins:${seconds.toStringAsFixed(0).padLeft(2, '0')}';
   }
 
-  @override
-  void dispose() {
-    player.dispose();
-    super.dispose();
+  String formatDate(String dateInString) {
+    if(dateInString == 'No date') return dateInString;
+    DateTime date = DateTime.parse(dateInString);
+    String formattedDate = DateFormat('dd MMMM yyyy').format(date);
+    return formattedDate;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          PopupMenuButton<String>(
-        onSelected: (String value) {
-          if (value == '1') {
-            // Delete logic goes here
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: '1',
-            child: Text('Delete'),
-          )
-        ],
-        icon: const Icon(Icons.menu),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(p.basename(widget.recording.path!)),
-            Text(DateFormat('yyyy-MM-dd HH:mm').format(widget.recording.createdAt)),
-            StreamBuilder(
-              stream: positionStream,
-              builder: (context, snapshot) {
-                final position = snapshot.data ?? Duration.zero;
-                final duration = player.duration ?? Duration.zero;
-                return Slider(
-                  onChanged: (value) {
-                    player.seek(Duration(seconds: value.toInt()));
-                  },
-                  value: position.inSeconds.toDouble(),
-                  min: 0.0,
-                  max: duration.inSeconds.toDouble(),
-                );
-              },
+      body: Obx(() {
+      if (sharedState.isLoading.value) {
+        return const Center(
+          child: SizedBox(
+            width: 300,
+            height: 300,
+            child: LoadingIndicator(
+              indicatorType: Indicator.ballClipRotateMultiple,
+              colors: [Color(0xFFE4E4E4)],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                StreamBuilder(
-                  stream: player.playingStream,
-                  builder: (context, snapshot) {
-                    final isPlaying = snapshot.data ?? false;
-                    return IconButton(
-                      onPressed: () {
-                        if (isPlaying) {
-                          player.pause();
-                        } else {
-                          player.play();
-                        }
-                      },
-                      icon: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        size: 48,
-                      ),
-                      color: Colors.blue,
-                      splashRadius: 24,
-                    );
-                  },
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
+          ),
+        );
+      } else if (widget.recording.transcription?['data']['transcription']['status'] == 'error') {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Error: ${widget.recording.transcription?['data']['transcription']['error']}'),
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                child: const Text('Go back'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        return InfoTabController(
+          createdAt: formatDate(widget.recording.transcription?['data']['transcription']['completed_at'] ?? 'No date'),
+          duration: formatDuration(widget.recording.transcription?['data']['transcription']['result']['metadata']['duration'] ?? 0.0),
+          summary: widget.recording.transcription?['data']['transcription']['result']['results']['summary']['short'] ?? 'No summary',
+          transcription: widget.recording.transcription?['data']['transcription']['result']['results']['channels'][0]['alternatives'][0]['paragraphs']['paragraphs'] ?? [],
+          recording: widget.recording,
+        );
+      }
+      }),
     );
   }
 }

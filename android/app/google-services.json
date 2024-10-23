@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639144617824",
+    "project_id": "kubrick-abc76",
+    "storage_bucket": "kubrick-abc76.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639144617824:android:f107c05d75bf255b3f6005",
+        "android_client_info": {
+          "package_name": "com.kubrick.kubrick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFy43EQOFIpYNjffas4Q_YBOMVepRVWeI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

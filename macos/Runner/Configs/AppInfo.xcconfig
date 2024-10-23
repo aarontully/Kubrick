@@ -8,7 +8,7 @@
 PRODUCT_NAME = kubrick
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.kubrick
+PRODUCT_BUNDLE_IDENTIFIER = com.kubrick.kubrick
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2024 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2024 com.kubrick. All rights reserved.
